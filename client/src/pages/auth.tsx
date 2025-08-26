@@ -17,123 +17,181 @@ import { ScrollText } from "lucide-react";
 // Enhanced Background animation components
 const AnimatedBackground = () => {
   return (
-    <div className="fixed inset-0 overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950 -z-10">
-      {/* Animated geometric shapes with more visibility */}
-      {[...Array(8)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute border border-blue-500/30 rounded-lg"
-          initial={{
-            scale: 0,
-            rotate: Math.random() * 180 - 90,
-            opacity: 0,
-            x: `${Math.random() * 100}%`,
-            y: `${Math.random() * 100}%`,
-          }}
-          animate={{
-            scale: [0, 0.8, 0.5],
-            rotate: [Math.random() * 180 - 90, Math.random() * 360 - 180],
-            opacity: [0, 0.3, 0.2],
-            x: [
-              `${Math.random() * 100}%`,
-              `${Math.random() * 100}%`,
-              `${Math.random() * 100}%`,
-            ],
-            y: [
-              `${Math.random() * 100}%`,
-              `${Math.random() * 100}%`,
-              `${Math.random() * 100}%`,
-            ],
-          }}
-          transition={{
-            duration: 15 + Math.random() * 15,
-            repeat: Infinity,
-            repeatType: "reverse",
-            ease: "easeInOut",
-          }}
-          style={{
-            width: `${40 + Math.random() * 120}px`,
-            height: `${40 + Math.random() * 120}px`,
-          }}
-        />
-      ))}
-
-      {/* More visible flowing lines */}
+    <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950 -z-10">
+      {/* Enhanced animated geometric shapes */}
       {[...Array(12)].map((_, i) => (
         <motion.div
-          key={`line-${i}`}
-          className="absolute h-0.5 bg-gradient-to-r from-transparent via-blue-500/40 to-transparent"
+          key={i}
+          className="absolute border-2 border-blue-400/60 rounded-lg shadow-lg shadow-blue-500/20"
           initial={{
-            opacity: 0,
-            x: `${Math.random() * 100}%`,
-            y: `${Math.random() * 100}%`,
-            rotate: Math.random() * 180,
+            scale: 1,
+            rotate: Math.random() * 360,
+            opacity: 0.7,
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
           }}
           animate={{
-            opacity: [0, 0.6, 0],
+            scale: [1, 1.5, 0.8, 1.2],
+            rotate: [
+              Math.random() * 360,
+              Math.random() * 360 + 180,
+              Math.random() * 360 + 360,
+              Math.random() * 360 + 540,
+            ],
+            opacity: [0.7, 1, 0.5, 0.8],
             x: [
-              `${Math.random() * 100}%`,
-              `${Math.random() * 100}%`,
-              `${Math.random() * 100}%`,
+              Math.random() * window.innerWidth,
+              Math.random() * window.innerWidth,
+              Math.random() * window.innerWidth,
+              Math.random() * window.innerWidth,
             ],
             y: [
-              `${Math.random() * 100}%`,
-              `${Math.random() * 100}%`,
-              `${Math.random() * 100}%`,
+              Math.random() * window.innerHeight,
+              Math.random() * window.innerHeight,
+              Math.random() * window.innerHeight,
+              Math.random() * window.innerHeight,
             ],
           }}
           transition={{
-            duration: 12 + Math.random() * 12,
+            duration: 8 + Math.random() * 6,
             repeat: Infinity,
             ease: "easeInOut",
           }}
           style={{
-            width: `${150 + Math.random() * 250}px`,
+            width: `${60 + Math.random() * 100}px`,
+            height: `${60 + Math.random() * 100}px`,
           }}
         />
       ))}
 
-      {/* More visible pulsing dots */}
-      {[...Array(15)].map((_, i) => (
+      {/* Highly visible flowing lines */}
+      {[...Array(20)].map((_, i) => (
         <motion.div
-          key={`dot-${i}`}
-          className="absolute rounded-full bg-blue-500/30"
+          key={`line-${i}`}
+          className="absolute h-1 bg-gradient-to-r from-transparent via-blue-400/80 to-transparent rounded-full shadow-sm shadow-blue-400/50"
           initial={{
-            scale: 0,
-            x: `${Math.random() * 100}%`,
-            y: `${Math.random() * 100}%`,
+            opacity: 0.8,
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            rotate: Math.random() * 360,
           }}
           animate={{
-            scale: [0, Math.random() * 1.2, 0],
-            opacity: [0, 0.5, 0],
+            opacity: [0.8, 1, 0.4, 0.9],
+            x: [
+              Math.random() * window.innerWidth,
+              Math.random() * window.innerWidth,
+              Math.random() * window.innerWidth,
+            ],
+            y: [
+              Math.random() * window.innerHeight,
+              Math.random() * window.innerHeight,
+              Math.random() * window.innerHeight,
+            ],
+            rotate: [
+              Math.random() * 360,
+              Math.random() * 360 + 180,
+              Math.random() * 360 + 360,
+            ],
           }}
           transition={{
-            duration: 6 + Math.random() * 10,
+            duration: 10 + Math.random() * 8,
             repeat: Infinity,
             ease: "easeInOut",
           }}
           style={{
-            width: `${4 + Math.random() * 10}px`,
-            height: `${4 + Math.random() * 10}px`,
+            width: `${200 + Math.random() * 300}px`,
           }}
         />
       ))}
 
-      {/* Pulsing radial gradient */}
+      {/* Prominent pulsing dots */}
+      {[...Array(25)].map((_, i) => (
+        <motion.div
+          key={`dot-${i}`}
+          className="absolute rounded-full bg-blue-400/70 shadow-lg shadow-blue-400/30"
+          initial={{
+            scale: 1,
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            opacity: 0.7,
+          }}
+          animate={{
+            scale: [1, 2, 0.5, 1.5],
+            opacity: [0.7, 1, 0.3, 0.8],
+            x: [
+              Math.random() * window.innerWidth,
+              Math.random() * window.innerWidth,
+              Math.random() * window.innerWidth,
+            ],
+            y: [
+              Math.random() * window.innerHeight,
+              Math.random() * window.innerHeight,
+              Math.random() * window.innerHeight,
+            ],
+          }}
+          transition={{
+            duration: 5 + Math.random() * 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          style={{
+            width: `${6 + Math.random() * 15}px`,
+            height: `${6 + Math.random() * 15}px`,
+          }}
+        />
+      ))}
+
+      {/* Flowing orbs */}
+      {[...Array(8)].map((_, i) => (
+        <motion.div
+          key={`orb-${i}`}
+          className="absolute rounded-full bg-gradient-radial from-blue-400/60 to-transparent blur-sm"
+          initial={{
+            scale: 1,
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+          }}
+          animate={{
+            scale: [1, 1.8, 1.2, 1.5],
+            x: [
+              Math.random() * window.innerWidth,
+              Math.random() * window.innerWidth,
+              Math.random() * window.innerWidth,
+            ],
+            y: [
+              Math.random() * window.innerHeight,
+              Math.random() * window.innerHeight,
+              Math.random() * window.innerHeight,
+            ],
+          }}
+          transition={{
+            duration: 12 + Math.random() * 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          style={{
+            width: `${80 + Math.random() * 120}px`,
+            height: `${80 + Math.random() * 120}px`,
+          }}
+        />
+      ))}
+
+      {/* Enhanced pulsing radial gradient */}
       <motion.div 
-        className="absolute inset-0 bg-radial-gradient from-transparent to-blue-900/20"
+        className="absolute inset-0 bg-radial-gradient from-transparent via-blue-900/30 to-transparent"
         animate={{
-          opacity: [0.1, 0.3, 0.1],
+          opacity: [0.2, 0.6, 0.2],
+          scale: [1, 1.1, 1],
         }}
         transition={{
-          duration: 8,
+          duration: 6,
           repeat: Infinity,
           repeatType: "reverse",
         }}
       />
 
-      {/* Subtle grid pattern for depth */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-10" />
+      {/* Enhanced grid pattern for depth */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-20" />
     </div>
   );
 };
