@@ -54,21 +54,17 @@ export default function Chat() {
     setIsSidebarCollapsed(isMobile);
   }, [isMobile]);
 
-  // Redirect to auth if not authenticated
   useEffect(() => {
     if (user === null) {
       setLocation("/auth");
     }
   }, [user, setLocation]);
 
-  // Auto-create conversation if none exists and user is authenticated
   useEffect(() => {
     if (user !== null && !conversationId && conversations !== undefined) {
       if (conversations.length === 0) {
-        // No conversations exist, create one
         createConversationMutation.mutate();
       } else {
-        // Redirect to the most recent conversation
         const mostRecent = conversations[0];
         setLocation(`/chat/${mostRecent.id}`);
       }
@@ -107,7 +103,6 @@ export default function Chat() {
 
   return (
     <div className="h-screen bg-background">
-      {/* Mobile Menu Button */}
       {isMobile && (
         <Button
           variant="ghost"
@@ -120,7 +115,6 @@ export default function Chat() {
         </Button>
       )}
 
-      {/* Sidebar Overlay for Mobile */}
       {isMobile && !isSidebarCollapsed && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -128,14 +122,12 @@ export default function Chat() {
         />
       )}
 
-      {/* Sidebar - Always Fixed */}
       <Sidebar
         currentConversationId={conversationId}
         isCollapsed={isMobile ? isSidebarCollapsed : (!isMobile && isSidebarCollapsed)}
         onToggleCollapse={toggleSidebar}
       />
 
-      {/* Main Chat Area with proper margin */}
       <div className={`h-full flex flex-col transition-all duration-300 ${
         isMobile ? 'ml-0' : (isSidebarCollapsed ? 'ml-16' : 'ml-80')
       }`}>

@@ -7,7 +7,6 @@ import session from "express-session";
 import { registerSchema, loginSchema, insertConversationSchema, insertMessageSchema, type ChatResponse } from "@shared/schema";
 import { z } from "zod";
 
-// Session configuration
 const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'guest-session-secret-change-this',
   resave: false,
@@ -19,12 +18,10 @@ const sessionConfig = {
   }
 };
 
-// Combined authentication middleware 
 const authenticateUserOrGuest = async (req: any, res: any, next: any) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
-  // Try JWT authentication first
   if (token) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
@@ -35,11 +32,9 @@ const authenticateUserOrGuest = async (req: any, res: any, next: any) => {
         return next();
       }
     } catch (error) {
-      // JWT failed, fall through to guest session
     }
   }
 
-  // Fall back to guest session
   if (req.session) {
     req.isGuest = true;
     req.sessionId = req.session.id;
@@ -49,7 +44,6 @@ const authenticateUserOrGuest = async (req: any, res: any, next: any) => {
   return res.status(401).json({ message: 'Authentication required' });
 };
 
-// Rate limiting helper (simple in-memory)
 const rateLimiter = new Map();
 const rateLimit = (maxRequests: number, windowMs: number) => {
   return (req: any, res: any, next: any) => {
@@ -74,10 +68,8 @@ const rateLimit = (maxRequests: number, windowMs: number) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session middleware
   app.use(session(sessionConfig));
 
-  // CORS
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -90,24 +82,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auth routes
   app.post('/api/auth/register', rateLimit(5, 15 * 60 * 100000), async (req, res) => {
     try {
       const { email, password } = registerSchema.parse(req.body);
       
-      // Check if user exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
         return res.status(400).json({ message: 'User already exists' });
       }
 
-      // Hash password
       const passwordHash = await bcrypt.hash(password, 12);
       
-      // Create user
       const user = await storage.createUser({ email, passwordHash });
       
-      // Generate JWT
       const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '7d' });
       
       res.json({ 
@@ -127,19 +114,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = loginSchema.parse(req.body);
       
-      // Find user
       const user = await storage.getUserByEmail(email);
       if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
-      // Check password
       const isValidPassword = await bcrypt.compare(password, user.passwordHash);
       if (!isValidPassword) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
-      // Generate JWT
       const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '7d' });
       
       res.json({ 
@@ -170,7 +154,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Guest session initialization
   app.post('/api/auth/guest', (req: any, res) => {
     if (!req.session.id) {
       return res.status(500).json({ message: 'Failed to create session' });
@@ -181,7 +164,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Conversation routes
   app.get('/api/conversations', authenticateUserOrGuest, async (req: any, res) => {
     try {
       if (req.isGuest) {
@@ -258,13 +240,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let recentMessages: any[];
       
       if (req.isGuest) {
-        // Verify guest conversation exists
         const conversation = await storage.getGuestConversation(conversationId, req.sessionId);
         if (!conversation) {
           return res.status(404).json({ message: 'Conversation not found' });
         }
 
-        // Save user message for guest
         userMessage = await (storage as any).createGuestMessageWithSession(
           conversationId,
           req.sessionId,
@@ -272,7 +252,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           content.trim()
         );
 
-        // Get recent conversation context
         recentMessages = await storage.getGuestConversationMessages(conversationId, req.sessionId);
       } else {
         const numericId = parseInt(conversationId);
@@ -280,13 +259,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: 'Invalid conversation ID' });
         }
 
-        // Verify user conversation exists
         const conversation = await storage.getConversation(numericId, req.user.id);
         if (!conversation) {
           return res.status(404).json({ message: 'Conversation not found' });
         }
 
-        // Save user message
         userMessage = await storage.createMessage({
           conversationId: numericId,
           role: 'user',
@@ -294,7 +271,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           sources: null
         });
 
-        // Get recent conversation context
         recentMessages = await storage.getConversationMessages(numericId, req.user.id);
       }
 
@@ -303,7 +279,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: msg.content
       }));
 
-      // Call Python RAG service
       const ragServiceUrl = process.env.RAG_SERVICE_URL || 'http://localhost:8001';
       const ragResponse = await fetch(`${ragServiceUrl}/chat`, {
         method: 'POST',
@@ -323,7 +298,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const ragData: ChatResponse = await ragResponse.json();
 
-      // Save assistant message with sources
       let assistantMessage: any;
       
       if (req.isGuest) {
@@ -343,8 +317,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Check if this is the first exchange (conversation now has exactly 2 messages)
-      // If so, generate a title for the conversation
       try {
         let currentMessages: any[];
         
@@ -354,12 +326,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           currentMessages = await storage.getConversationMessages(parseInt(conversationId), req.user.id);
         }
 
-        // Only generate title for first exchange (2 messages total: 1 user + 1 assistant)
         if (currentMessages.length === 2) {
           try {
             const ragServiceUrl = process.env.RAG_SERVICE_URL || 'http://localhost:8001';
             
-            // Call title generation endpoint
             const titleResponse = await fetch(`${ragServiceUrl}/generate-title`, {
               method: 'POST',
               headers: {
@@ -375,7 +345,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const titleData = await titleResponse.json();
               const generatedTitle = titleData.title || 'New Conversation';
               
-              // Update conversation title
               if (req.isGuest) {
                 await storage.updateGuestConversationTitle(conversationId, req.sessionId, generatedTitle);
               } else {
@@ -385,12 +354,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log(`Generated title for conversation ${conversationId}: "${generatedTitle}"`);
             }
           } catch (titleError) {
-            // Don't fail the whole request if title generation fails
             console.warn('Title generation failed:', titleError);
           }
         }
       } catch (titleError) {
-        // Don't fail the whole request if title generation fails
         console.warn('Title generation failed:', titleError);
       }
 
@@ -426,7 +393,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // RAG ingestion endpoint (admin only for now)
   app.post('/api/admin/ingest', async (req, res) => {
     try {
       const ragServiceUrl = process.env.RAG_SERVICE_URL || 'http://localhost:8001';

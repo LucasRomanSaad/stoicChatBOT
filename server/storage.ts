@@ -3,41 +3,34 @@ import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
-  // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
 
-  // Conversations (User-based)
   getConversation(id: number, userId: number): Promise<Conversation | undefined>;
   getUserConversations(userId: number): Promise<Conversation[]>;
   createConversation(conversation: InsertConversation): Promise<Conversation>;
   updateConversationTitle(id: number, userId: number, title: string): Promise<void>;
   deleteConversation(id: number, userId: number): Promise<void>;
 
-  // Messages (User-based)
   getConversationMessages(conversationId: number, userId: number): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
   deleteMessage(id: number, conversationId: number, userId: number): Promise<void>;
 
-  // Guest Conversations
   getGuestConversation(id: string, sessionId: string): Promise<GuestConversation | undefined>;
   getGuestConversations(sessionId: string): Promise<GuestConversation[]>;
   createGuestConversation(sessionId: string, title?: string): Promise<GuestConversation>;
   updateGuestConversationTitle(id: string, sessionId: string, title: string): Promise<void>;
   deleteGuestConversation(id: string, sessionId: string): Promise<void>;
 
-  // Guest Messages
   getGuestConversationMessages(conversationId: string, sessionId: string): Promise<GuestMessage[]>;
   createGuestMessage(conversationId: string, role: 'user' | 'assistant', content: string, sources?: any): Promise<GuestMessage>;
   deleteGuestMessage(id: string, conversationId: string, sessionId: string): Promise<void>;
 
-  // Session cleanup
   cleanupExpiredSessions(): Promise<void>;
 }
 
 class DatabaseStorage {
-  // This class only implements user-related database operations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
@@ -94,7 +87,6 @@ class DatabaseStorage {
   }
 
   async getConversationMessages(conversationId: number, userId: number): Promise<Message[]> {
-    // First verify user owns this conversation
     const conversation = await this.getConversation(conversationId, userId);
     if (!conversation) {
       throw new Error("Conversation not found");
@@ -116,7 +108,6 @@ class DatabaseStorage {
   }
 
   async deleteMessage(id: number, conversationId: number, userId: number): Promise<void> {
-    // First verify user owns this conversation
     const conversation = await this.getConversation(conversationId, userId);
     if (!conversation) {
       throw new Error("Conversation not found");
@@ -128,12 +119,11 @@ class DatabaseStorage {
   }
 }
 
-// In-memory storage for guest sessions
 class GuestSessionStorage {
   private conversations: Map<string, GuestConversation[]> = new Map();
   private messages: Map<string, GuestMessage[]> = new Map();
   private sessionTimestamps: Map<string, Date> = new Map();
-  private readonly SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
+  private readonly SESSION_TIMEOUT = 24 * 60 * 60 * 1000; 
 
   generateId(): string {
     return Math.random().toString(36).substr(2, 9);
@@ -210,7 +200,6 @@ class GuestSessionStorage {
     const filtered = conversations.filter(c => c.id !== id);
     this.conversations.set(sessionId, filtered);
     
-    // Also delete all messages for this conversation
     const messages = this.messages.get(sessionId) || [];
     const filteredMessages = messages.filter(m => m.conversationId !== id);
     this.messages.set(sessionId, filteredMessages);
@@ -266,11 +255,9 @@ class GuestSessionStorage {
   }
 }
 
-// Combined storage class that implements both database and guest storage
 export class CombinedStorage extends DatabaseStorage implements IStorage {
   private guestStorage = new GuestSessionStorage();
 
-  // Guest conversation methods
   async getGuestConversation(id: string, sessionId: string): Promise<GuestConversation | undefined> {
     return this.guestStorage.getGuestConversation(id, sessionId);
   }
@@ -291,13 +278,11 @@ export class CombinedStorage extends DatabaseStorage implements IStorage {
     return this.guestStorage.deleteGuestConversation(id, sessionId);
   }
 
-  // Guest message methods
   async getGuestConversationMessages(conversationId: string, sessionId: string): Promise<GuestMessage[]> {
     return this.guestStorage.getGuestConversationMessages(conversationId, sessionId);
   }
 
   async createGuestMessage(conversationId: string, role: 'user' | 'assistant', content: string, sources?: any): Promise<GuestMessage> {
-    // We need sessionId but it's not in the interface signature, we'll handle this in routes
     throw new Error('Use createGuestMessageWithSession instead');
   }
 
@@ -316,7 +301,6 @@ export class CombinedStorage extends DatabaseStorage implements IStorage {
 
 export const storage = new CombinedStorage();
 
-// Cleanup expired sessions every hour
 setInterval(() => {
   storage.cleanupExpiredSessions().catch(console.error);
 }, 60 * 60 * 1000);

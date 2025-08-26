@@ -86,7 +86,6 @@ Remember: I am a personal guide drawing from authentic Stoic texts. For introduc
         
         context_parts = ["Previous conversation context:"]
         for msg in conversation_context:
-            # Handle both dict and object types
             if hasattr(msg, 'role'):
                 role = msg.role.title()
                 content = msg.content[:200] + "..." if len(msg.content) > 200 else msg.content
@@ -102,7 +101,6 @@ Remember: I am a personal guide drawing from authentic Stoic texts. For introduc
         if not sources:
             return False
         
-        # Check if the best source has reasonable similarity
         best_similarity = max(source['similarity'] for source in sources)
         return best_similarity >= 0.5
     
@@ -110,10 +108,8 @@ Remember: I am a personal guide drawing from authentic Stoic texts. For introduc
         """Check if the query is a greeting or introductory question."""
         query_lower = query.lower().strip()
         
-        # Check if this is the first message in conversation (no previous context)
         is_first_message = not conversation_context or len(conversation_context) == 0
         
-        # Greeting patterns
         greeting_patterns = [
             'hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening',
             'what is your purpose', 'what is your pourpose', 'who are you', 'what do you do',
@@ -121,12 +117,10 @@ Remember: I am a personal guide drawing from authentic Stoic texts. For introduc
             'what is this', 'what is this app', 'what is this about'
         ]
         
-        # Check for exact matches or if query starts with greeting
         for pattern in greeting_patterns:
             if query_lower == pattern or query_lower.startswith(pattern):
                 return True
         
-        # If it's the first message and query is very short (likely a greeting)
         if is_first_message and len(query.split()) <= 3:
             return True
             
@@ -153,16 +147,12 @@ Remember: I am a personal guide drawing from authentic Stoic texts. For introduc
             raise Exception("LLM service not properly initialized. Check GROQ_API_KEY.")
         
         try:
-            # Check if this is a greeting or introduction
             is_greeting = self._is_greeting_or_introduction(query, conversation_context)
             
-            # Build context
             source_context = self._build_context_from_sources(sources)
             conv_context = self._build_conversation_context(conversation_context or [])
             
-            # Handle greetings differently
             if is_greeting:
-                # For greetings, only use sources if they're highly relevant
                 high_quality_sources = [s for s in sources if s['similarity'] >= 0.7] if sources else []
                 if high_quality_sources:
                     source_context = self._build_context_from_sources(high_quality_sources)
@@ -173,18 +163,15 @@ Some relevant Stoic sources:
 
 Respond with a warm, personal welcome as their Stoic guide. Introduce yourself in first person, explain your purpose, and invite them to share their thoughts or challenges. Keep it conversational and welcoming."""
                 else:
-                    # No relevant sources, provide a standard warm welcome
                     user_message = f"""{conv_context}The user is greeting me with: "{query}"
 
 Respond with a warm, personal welcome as their Stoic guide. Introduce yourself in first person ("Hello! I'm your personal Stoic guide"), explain your purpose (to help navigate life's challenges using Stoic wisdom), and invite them to share their thoughts or specific challenges they're facing. Keep it conversational, welcoming, and personal - not formal or academic."""
             else:
-                # Regular philosophical discussion
-                # Check source quality
+                
                 source_quality_warning = ""
                 if not self._check_source_quality(sources):
                     source_quality_warning = "\n\nNote: I have limited confidence in the relevance of the available sources for this question. Please take this response with appropriate caution."
                 
-                # Build the user message for philosophical guidance
                 user_message = f"""{conv_context}Current question: {query}
 
 Available Stoic sources:
@@ -192,13 +179,11 @@ Available Stoic sources:
 
 Please provide a thoughtful response based on these Stoic teachings. Focus on practical wisdom and application. Speak as a personal guide using "I" and "me", maintaining a warm but wise tone.{source_quality_warning}"""
 
-            # Prepare messages
             messages = [
                 {"role": "system", "content": self._build_system_prompt()},
                 {"role": "user", "content": user_message}
             ]
             
-            # Try primary model first
             try:
                 response = self._call_groq(messages, self.primary_model)
                 model_used = self.primary_model
@@ -207,10 +192,8 @@ Please provide a thoughtful response based on these Stoic teachings. Focus on pr
                 response = self._call_groq(messages, self.fallback_model)
                 model_used = self.fallback_model
             
-            # Extract response content
             answer = response.choices[0].message.content
             
-            # Calculate token usage
             usage_info = {
                 "tokens_prompt": response.usage.prompt_tokens,
                 "tokens_completion": response.usage.completion_tokens,
@@ -302,11 +285,9 @@ Generate only the title, nothing else."""
                 {"role": "user", "content": user_message}
             ]
             
-            # Use the faster model for title generation
             response = self._call_groq(messages, self.fallback_model)
             title = response.choices[0].message.content.strip()
             
-            # Clean up the title (remove quotes, ensure proper length)
             title = title.strip('"\'')
             words = title.split()
             if len(words) > 6:
@@ -317,7 +298,6 @@ Generate only the title, nothing else."""
             
         except Exception as e:
             logger.error(f"Error generating title: {e}")
-            # Return a fallback title based on keywords in the user question
             words = user_question.lower().split()
             stoic_keywords = ['virtue', 'wisdom', 'courage', 'justice', 'temperance', 'stoic', 'philosophy', 'emotion', 'resilience']
             found_keywords = [word for word in words if word in stoic_keywords]

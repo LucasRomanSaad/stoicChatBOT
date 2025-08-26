@@ -124,7 +124,6 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
     
-    // Auto-resize textarea
     const textarea = e.target;
     textarea.style.height = "auto";
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + "px";
@@ -172,10 +171,8 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
 
   return (
     <div className="flex-1 flex flex-col relative overflow-hidden">
-      {/* Background gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-muted/10 pointer-events-none" />
       
-      {/* Chat Header */}
       <motion.div 
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -292,7 +289,6 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
         </div>
       </motion.div>
 
-      {/* Messages Container */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -397,7 +393,6 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
             </AnimatePresence>
           )}
 
-          {/* Enhanced Typing Indicator */}
           <AnimatePresence>
             {isTyping && (
               <motion.div
@@ -451,7 +446,6 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
         </div>
       </motion.div>
 
-      {/* Enhanced Message Input */}
       <motion.div 
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

@@ -14,11 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollText } from "lucide-react";
 
-// Enhanced Background animation components
 const AnimatedBackground = () => {
   return (
     <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-950 -z-10">
-      {/* Enhanced animated geometric shapes */}
       {[...Array(12)].map((_, i) => (
         <motion.div
           key={i}
@@ -64,7 +62,6 @@ const AnimatedBackground = () => {
         />
       ))}
 
-      {/* Highly visible flowing lines */}
       {[...Array(20)].map((_, i) => (
         <motion.div
           key={`line-${i}`}
@@ -104,7 +101,6 @@ const AnimatedBackground = () => {
         />
       ))}
 
-      {/* Prominent pulsing dots */}
       {[...Array(25)].map((_, i) => (
         <motion.div
           key={`dot-${i}`}
@@ -141,7 +137,6 @@ const AnimatedBackground = () => {
         />
       ))}
 
-      {/* Flowing orbs */}
       {[...Array(8)].map((_, i) => (
         <motion.div
           key={`orb-${i}`}
@@ -176,7 +171,6 @@ const AnimatedBackground = () => {
         />
       ))}
 
-      {/* Enhanced pulsing radial gradient */}
       <motion.div 
         className="absolute inset-0 bg-radial-gradient from-transparent via-blue-900/30 to-transparent"
         animate={{
@@ -190,7 +184,6 @@ const AnimatedBackground = () => {
         }}
       />
 
-      {/* Enhanced grid pattern for depth */}
       <div className="absolute inset-0 bg-grid-pattern opacity-20" />
     </div>
   );
@@ -423,7 +416,6 @@ export default function Auth() {
               </TabsContent>
             </Tabs>
 
-            {/* Guest Mode Section */}
             <div className="mt-6 text-center">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -452,7 +444,6 @@ export default function Auth() {
         </Card>
       </motion.div>
 
-      {/* Add CSS for the grid pattern */}
       <style jsx>{`
         .bg-grid-pattern {
           background-image: 

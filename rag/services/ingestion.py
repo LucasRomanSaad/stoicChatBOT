@@ -30,7 +30,6 @@ class DocumentIngestionService:
     async def initialize(self):
         """Initialize the ingestion service."""
         try:
-            # Create ChromaDB directory if it doesn't exist
             os.makedirs(self.chroma_path, exist_ok=True)
             
             # Initialize ChromaDB
@@ -40,7 +39,6 @@ class DocumentIngestionService:
                 metadata={"hnsw:space": "cosine"}
             )
             
-            # Initialize embeddings model
             try:
                 self.embeddings_model = HuggingFaceEmbeddings(
                     model_name=self.embedding_model_name
@@ -49,7 +47,6 @@ class DocumentIngestionService:
                 logger.error(f"Failed to load embedding model: {e}")
                 raise
             
-            # Initialize text splitter
             self.text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=self.chunk_size,
                 chunk_overlap=self.chunk_overlap,
@@ -97,7 +94,6 @@ class DocumentIngestionService:
                 logger.warning(f"No pages extracted from {file_path.name}")
                 return []
             
-            # Filter out empty documents
             valid_documents = [doc for doc in documents if doc.page_content.strip()]
             
             if not valid_documents:
@@ -115,10 +111,8 @@ class DocumentIngestionService:
         chunks = []
         
         for doc_idx, document in enumerate(documents):
-            # Split the document text
             text_chunks = self.text_splitter.split_text(document.page_content)
             
-            # Create chunk data with metadata
             for chunk_idx, chunk_text in enumerate(text_chunks):
                 chunk_id = f"{title}_doc{doc_idx}_{chunk_idx}"
                 
@@ -136,7 +130,6 @@ class DocumentIngestionService:
     def _embed_documents(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for a list of texts."""
         try:
-            # Process in batches to avoid memory issues
             batch_size = 32
             all_embeddings = []
             
@@ -156,10 +149,8 @@ class DocumentIngestionService:
             return 0
         
         try:
-            # Get next available ID
             next_id = self.collection.count()
             
-            # Extract content for embedding and filter empty chunks
             valid_chunks = [chunk for chunk in chunks if chunk["content"].strip()]
             
             if not valid_chunks:
@@ -168,10 +159,8 @@ class DocumentIngestionService:
             
             documents_content = [chunk["content"] for chunk in valid_chunks]
             
-            # Generate embeddings
             embeddings = self._embed_documents(documents_content)
             
-            # Prepare metadata (excluding content which goes in documents)
             metadatas = [
                 {
                     "title": chunk["title"],
@@ -182,10 +171,8 @@ class DocumentIngestionService:
                 for chunk in valid_chunks
             ]
             
-            # Generate IDs
             ids = [f"chunk_{next_id + i}" for i in range(len(valid_chunks))]
             
-            # Insert into collection
             self.collection.add(
                 embeddings=embeddings,
                 ids=ids,
@@ -210,10 +197,8 @@ class DocumentIngestionService:
         if not pdfs_dir.exists():
             raise FileNotFoundError(f"PDFs directory not found: {pdfs_dir}")
         
-        # Load existing manifest
         manifest = self._load_manifest()
         
-        # Find all PDF files
         pdf_files = list(pdfs_dir.glob("*.pdf"))
         
         if not pdf_files:
@@ -231,11 +216,9 @@ class DocumentIngestionService:
         
         for pdf_file in pdf_files:
             try:
-                # Calculate file hash
                 current_hash = self._calculate_file_hash(pdf_file)
                 file_key = str(pdf_file.name)
                 
-                # Check if file has changed
                 if file_key in manifest["files"]:
                     stored_hash = manifest["files"][file_key]["hash"]
                     if current_hash == stored_hash:
@@ -243,7 +226,6 @@ class DocumentIngestionService:
                         skipped_files.append(pdf_file.name)
                         continue
                 
-                # Load and process the PDF
                 logger.info(f"Processing: {pdf_file.name}")
                 documents = self._load_pdf(pdf_file)
                 
@@ -251,18 +233,14 @@ class DocumentIngestionService:
                     logger.warning(f"No content extracted from: {pdf_file.name}")
                     continue
                 
-                # Create document title from filename
                 title = pdf_file.stem.replace("_", " ").replace("-", " ").title()
                 
-                # Split into chunks
                 chunks = self._chunk_documents(documents, title)
                 
                 if chunks:
-                    # Insert chunks into database
                     chunks_inserted = self._insert_chunks(chunks)
                     total_chunks += chunks_inserted
                     
-                    # Update manifest
                     manifest["files"][file_key] = {
                         "hash": current_hash,
                         "title": title,
@@ -277,7 +255,6 @@ class DocumentIngestionService:
                 logger.error(f"Error processing {pdf_file}: {e}")
                 continue
         
-        # Save updated manifest
         self._save_manifest(manifest)
         
         result = {
@@ -295,23 +272,18 @@ class DocumentIngestionService:
         Clean up the entire knowledge base by deleting all documents and resetting the manifest.
         """
         try:
-            # Get current stats
             doc_count_before = self.collection.count()
             
-            # Delete all documents from the collection
             if doc_count_before > 0:
-                # Get all document IDs
                 all_docs = self.collection.get(include=[])
                 if all_docs["ids"]:
                     self.collection.delete(ids=all_docs["ids"])
                     logger.info(f"Deleted {len(all_docs['ids'])} documents from collection")
             
-            # Reset the ingestion manifest
             empty_manifest = {"files": {}}
             self._save_manifest(empty_manifest)
             logger.info("Reset ingestion manifest")
             
-            # Verify cleanup
             doc_count_after = self.collection.count()
             
             result = {

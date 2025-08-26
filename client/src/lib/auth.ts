@@ -43,7 +43,7 @@ export const authService = {
     const response = await apiRequest("POST", "/api/auth/guest", {});
     const result = await response.json();
     localStorage.setItem("guest_mode", "true");
-    localStorage.removeItem("auth_token"); // Clear any existing token
+    localStorage.removeItem("auth_token"); 
     return result;
   },
 

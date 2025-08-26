@@ -15,7 +15,6 @@ export function SourceCitation({ sources }: SourceCitationProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set());
 
-  // Filter sources to only show those with similarity >= 0.5
   const filteredSources = sources?.filter(source => source.similarity >= 0.5) || [];
 
   const toggleSource = (index: number) => {
@@ -46,7 +45,6 @@ export function SourceCitation({ sources }: SourceCitationProps) {
       className="mt-3"
     >
       <Card className="overflow-hidden" data-testid="sources-container">
-        {/* Collapsible Header */}
         <Button
           variant="ghost"
           onClick={() => setIsExpanded(!isExpanded)}
@@ -82,7 +80,6 @@ export function SourceCitation({ sources }: SourceCitationProps) {
           </motion.div>
         </Button>
 
-        {/* Collapsible Content */}
         <AnimatePresence>
           {isExpanded && (
             <motion.div

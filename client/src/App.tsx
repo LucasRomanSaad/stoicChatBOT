@@ -22,18 +22,15 @@ function AuthenticatedApp() {
   });
 
   useEffect(() => {
-    // Only run auth logic after data is loaded to prevent infinite loops
     if (isLoading) return;
     
     const hasAuthState = authService.hasAuthState();
     
-    // Redirect to auth if no auth state and not already on auth page
     if (!hasAuthState && location !== "/auth") {
       setLocation("/auth");
       return;
     }
     
-    // Redirect away from auth if user has auth state
     if (hasAuthState && location === "/auth") {
       setLocation("/chat");
       return;

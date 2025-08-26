@@ -4,7 +4,6 @@ import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table
 export const users = pgTable("users", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   email: text("email").notNull().unique(),
@@ -12,7 +11,6 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`NOW()`),
 });
 
-// Conversations table
 export const conversations = pgTable("conversations", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   userId: bigserial("user_id", { mode: "number" }).notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -20,10 +18,8 @@ export const conversations = pgTable("conversations", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`NOW()`),
 });
 
-// Message role enum
 export const roleEnum = pgEnum("role", ["user", "assistant"]);
 
-// Messages table
 export const messages = pgTable("messages", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   conversationId: bigserial("conversation_id", { mode: "number" }).notNull().references(() => conversations.id, { onDelete: "cascade" }),
@@ -33,7 +29,6 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`NOW()`),
 });
 
-// Relations
 export const usersRelations = relations(users, ({ many }) => ({
   conversations: many(conversations),
 }));
@@ -53,7 +48,6 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   }),
 }));
 
-// Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   passwordHash: true,
@@ -71,7 +65,6 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
   sources: true,
 });
 
-// Auth schemas
 export const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
@@ -82,7 +75,6 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-// Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Conversation = typeof conversations.$inferSelect;
@@ -93,14 +85,12 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type RegisterData = z.infer<typeof registerSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
 
-// Guest schema
 export const guestSessionSchema = z.object({
   sessionId: z.string(),
 });
 
 export type GuestSessionData = z.infer<typeof guestSessionSchema>;
 
-// Source types for RAG
 export type Source = {
   title: string;
   chunk_id: string;
@@ -119,7 +109,6 @@ export type ChatResponse = {
   };
 };
 
-// Guest conversation types
 export type GuestConversation = {
   id: string;
   sessionId: string;

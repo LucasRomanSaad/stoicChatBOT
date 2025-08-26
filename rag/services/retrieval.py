@@ -19,24 +19,19 @@ class RetrievalService:
     async def initialize(self):
         """Initialize the retrieval service."""
         try:
-            # Create ChromaDB directory if it doesn't exist
             os.makedirs(self.chroma_path, exist_ok=True)
             
-            # Initialize ChromaDB
             self.client = chromadb.PersistentClient(path=self.chroma_path)
             
-            # Get existing collection
             try:
                 self.collection = self.client.get_collection("stoic_documents")
             except Exception:
-                # Collection doesn't exist, create it
                 self.collection = self.client.create_collection(
                     name="stoic_documents",
                     metadata={"hnsw:space": "cosine"}
                 )
                 logger.warning("Created new empty collection. Run /ingest to add documents.")
             
-            # Initialize embeddings model
             try:
                 self.embeddings_model = HuggingFaceEmbeddings(
                     model_name=self.embedding_model_name
@@ -45,7 +40,6 @@ class RetrievalService:
                 logger.error(f"Failed to load embedding model: {e}")
                 raise
             
-            # Check if collection has documents
             doc_count = self.collection.count()
             if doc_count == 0:
                 logger.warning("No documents in collection. Run /ingest to add documents.")
@@ -78,29 +72,24 @@ class RetrievalService:
             List of document dictionaries with content and metadata
         """
         try:
-            # Check if collection has documents
             if self.collection.count() == 0:
                 logger.warning("No documents available for retrieval")
                 return []
             
-            # Generate query embedding
             query_embedding = self._embed_query(query)
             
-            # Search for similar documents
             results = self.collection.query(
                 query_embeddings=[query_embedding],
                 n_results=top_k,
                 include=["documents", "metadatas", "distances"]
             )
             
-            # Format results
             documents = []
             if results["documents"] and results["documents"][0]:
                 for i, doc in enumerate(results["documents"][0]):
                     distance = results["distances"][0][i]
-                    similarity = 1 - distance  # Convert distance to similarity
+                    similarity = 1 - distance  
                     
-                    # Filter by minimum similarity
                     if similarity >= min_similarity:
                         metadata = results["metadatas"][0][i]
                         
@@ -126,14 +115,12 @@ class RetrievalService:
         try:
             doc_count = self.collection.count()
             
-            # Get sample documents to analyze
             if doc_count > 0:
                 sample_results = self.collection.get(
                     limit=min(100, doc_count),
                     include=["metadatas"]
                 )
                 
-                # Count documents by title
                 title_counts = {}
                 for metadata in sample_results["metadatas"]:
                     title = metadata.get("title", "Unknown")

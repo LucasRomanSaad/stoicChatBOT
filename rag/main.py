@@ -1,12 +1,7 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 
-class TitleRequest(BaseModel):
-    user_message: str
-    assistant_response: str
 
-class TitleResponse(BaseModel):
-    title: str
 from typing import List, Optional, Dict, Any
 from contextlib import asynccontextmanager
 import os
@@ -16,13 +11,11 @@ from services.ingestion import DocumentIngestionService
 from services.retrieval import RetrievalService
 from services.llm import LLMService
 
-# Load environment variables
 env_path = Path(__file__).parent / '.env'
 if env_path.exists():
     from dotenv import load_dotenv
     load_dotenv(env_path)
 
-# Initialize services
 ingestion_service = DocumentIngestionService()
 retrieval_service = RetrievalService()
 llm_service = LLMService()
@@ -41,9 +34,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Personal Stoic Guide RAG Service", version="1.0.0", lifespan=lifespan)
 
-# Request/Response models
 class Message(BaseModel):
-    role: str  # 'user' or 'assistant'
+    role: str  
     content: str
 
 class ChatRequest(BaseModel):
@@ -110,26 +102,26 @@ async def chat(request: ChatRequest):
         ChatResponse with answer, sources, and usage information
     """
     try:
-        # Retrieve relevant documents
+        
         sources = await retrieval_service.retrieve_documents(
             query=request.query,
             top_k=request.top_k
         )
         
-        # Build conversation context
+        
         context_messages = []
         if request.conversation_context:
-            # Take last 6 messages for context
+            
             context_messages = request.conversation_context[-6:]
         
-        # Generate response using LLM
+        
         response = await llm_service.generate_response(
             query=request.query,
             sources=sources,
             conversation_context=context_messages
         )
         
-        # Format sources for response
+        
         formatted_sources = [
             Source(
                 title=source["title"],

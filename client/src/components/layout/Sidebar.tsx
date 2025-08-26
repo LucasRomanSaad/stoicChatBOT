@@ -117,7 +117,6 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
         transition={{ duration: 0.3 }}
         className="fixed left-0 top-0 h-screen bg-card border-r  border-blue-500 flex flex-col z-30"
       >
-        {/* Header */}
         <div className="p-4 border-b border-gray-500 flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
@@ -175,7 +174,6 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
           </Button>
         </div>
 
-        {/* Conversations List with Scroll Area */}
         <div className="flex-1 flex flex-col min-h-0">
           <div className="p-4 pb-2 flex-shrink-0">
             <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">

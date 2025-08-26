@@ -23,7 +23,6 @@ export function SettingsModal({ open, onOpenChange, user, isGuest = false, onSig
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Theme Settings */}
           <div>
             <h3 className="text-sm font-medium mb-3">Appearance</h3>
             <div className="flex items-center justify-between">
@@ -36,7 +35,6 @@ export function SettingsModal({ open, onOpenChange, user, isGuest = false, onSig
             </div>
           </div>
 
-          {/* Account Settings */}
           <div>
             <h3 className="text-sm font-medium mb-3">Account</h3>
             <div className="space-y-3">
@@ -63,7 +61,6 @@ export function SettingsModal({ open, onOpenChange, user, isGuest = false, onSig
           
         </div>
 
-        {/* Sign Out Button */}
         <div className="mt-8 pt-6 border-t">
           <Button
             variant="destructive"
