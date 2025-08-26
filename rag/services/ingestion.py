@@ -64,11 +64,15 @@ class DocumentIngestionService:
     
     def _calculate_file_hash(self, file_path: Path) -> str:
         """Calculate SHA-256 hash of a file."""
-        hash_sha256 = hashlib.sha256()
-        with open(file_path, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_sha256.update(chunk)
-        return hash_sha256.hexdigest()
+        try:
+            hash_sha256 = hashlib.sha256()
+            with open(file_path, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_sha256.update(chunk)
+            return hash_sha256.hexdigest()
+        except Exception as e:
+            logger.error(f"Error calculating hash for {file_path}: {e}")
+            raise
     
     def _load_manifest(self) -> Dict[str, Any]:
         """Load the ingestion manifest."""
@@ -88,8 +92,20 @@ class DocumentIngestionService:
         try:
             loader = PyPDFLoader(str(file_path))
             documents = loader.load()
-            logger.info(f"Successfully loaded: {file_path.name}")
-            return documents
+            
+            if not documents:
+                logger.warning(f"No pages extracted from {file_path.name}")
+                return []
+            
+            # Filter out empty documents
+            valid_documents = [doc for doc in documents if doc.page_content.strip()]
+            
+            if not valid_documents:
+                logger.warning(f"No content found in {file_path.name}")
+                return []
+            
+            logger.info(f"Successfully loaded {len(valid_documents)} pages from: {file_path.name}")
+            return valid_documents
         except Exception as e:
             logger.error(f"Error loading {file_path}: {e}")
             return []
@@ -119,45 +135,70 @@ class DocumentIngestionService:
     
     def _embed_documents(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for a list of texts."""
-        return self.embeddings_model.embed_documents(texts)
+        try:
+            # Process in batches to avoid memory issues
+            batch_size = 32
+            all_embeddings = []
+            
+            for i in range(0, len(texts), batch_size):
+                batch = texts[i:i + batch_size]
+                batch_embeddings = self.embeddings_model.embed_documents(batch)
+                all_embeddings.extend(batch_embeddings)
+            
+            return all_embeddings
+        except Exception as e:
+            logger.error(f"Error generating embeddings: {e}")
+            raise
     
     def _insert_chunks(self, chunks: List[Dict[str, Any]]) -> int:
         """Insert chunks into ChromaDB collection."""
         if not chunks:
             return 0
         
-        # Get next available ID
-        next_id = self.collection.count()
-        
-        # Extract content for embedding
-        documents_content = [chunk["content"] for chunk in chunks]
-        
-        # Generate embeddings
-        embeddings = self._embed_documents(documents_content)
-        
-        # Prepare metadata (excluding content which goes in documents)
-        metadatas = [
-            {
-                "title": chunk["title"],
-                "chunk_id": chunk["chunk_id"],
-                "page": chunk["page"],
-                "source_path": chunk["source_path"]
-            }
-            for chunk in chunks
-        ]
-        
-        # Generate IDs
-        ids = [f"chunk_{next_id + i}" for i in range(len(chunks))]
-        
-        # Insert into collection
-        self.collection.add(
-            embeddings=embeddings,
-            ids=ids,
-            documents=documents_content,
-            metadatas=metadatas
-        )
-        
-        return len(chunks)
+        try:
+            # Get next available ID
+            next_id = self.collection.count()
+            
+            # Extract content for embedding and filter empty chunks
+            valid_chunks = [chunk for chunk in chunks if chunk["content"].strip()]
+            
+            if not valid_chunks:
+                logger.warning("No valid chunks to insert after filtering")
+                return 0
+            
+            documents_content = [chunk["content"] for chunk in valid_chunks]
+            
+            # Generate embeddings
+            embeddings = self._embed_documents(documents_content)
+            
+            # Prepare metadata (excluding content which goes in documents)
+            metadatas = [
+                {
+                    "title": chunk["title"],
+                    "chunk_id": chunk["chunk_id"],
+                    "page": chunk["page"],
+                    "source_path": chunk["source_path"]
+                }
+                for chunk in valid_chunks
+            ]
+            
+            # Generate IDs
+            ids = [f"chunk_{next_id + i}" for i in range(len(valid_chunks))]
+            
+            # Insert into collection
+            self.collection.add(
+                embeddings=embeddings,
+                ids=ids,
+                documents=documents_content,
+                metadatas=metadatas
+            )
+            
+            logger.info(f"Successfully inserted {len(valid_chunks)} chunks into database")
+            return len(valid_chunks)
+            
+        except Exception as e:
+            logger.error(f"Error inserting chunks: {e}")
+            raise
     
     async def ingest_pdfs(self) -> Dict[str, Any]:
         """
