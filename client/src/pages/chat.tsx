@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { authService } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ChatInterface } from "@/components/chat/ChatInterface";
@@ -11,13 +11,43 @@ import { useIsMobile } from "@/hooks/use-mobile";
 export default function Chat() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
-  const conversationId = parseInt(id || "0");
+  const conversationId = id ? parseInt(id) : null;
   const isMobile = useIsMobile();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(isMobile);
 
   const { data: user } = useQuery({
     queryKey: ["/api/me"],
     queryFn: authService.getCurrentUser,
+  });
+
+  const { data: conversations } = useQuery({
+    queryKey: ["/api/conversations"],
+    queryFn: async () => {
+      const response = await fetch("/api/conversations", {
+        headers: {
+          'Authorization': `Bearer ${authService.getToken()}`,
+        },
+      });
+      return response.json();
+    },
+    enabled: !!user,
+  });
+
+  const createConversationMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/conversations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${authService.getToken()}`,
+        },
+        body: JSON.stringify({ title: "New Conversation" }),
+      });
+      return response.json();
+    },
+    onSuccess: (newConversation) => {
+      setLocation(`/chat/${newConversation.id}`);
+    },
   });
 
   useEffect(() => {
@@ -31,9 +61,29 @@ export default function Chat() {
     }
   }, [user, setLocation]);
 
-  if (!conversationId || isNaN(conversationId)) {
-    setLocation("/");
-    return null;
+  // Auto-create conversation if none exists and user is authenticated
+  useEffect(() => {
+    if (user && !conversationId && conversations !== undefined) {
+      if (conversations.length === 0) {
+        // No conversations exist, create one
+        createConversationMutation.mutate();
+      } else {
+        // Redirect to the most recent conversation
+        const mostRecent = conversations[0];
+        setLocation(`/chat/${mostRecent.id}`);
+      }
+    }
+  }, [user, conversationId, conversations, createConversationMutation, setLocation]);
+
+  if (!conversationId) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Setting up your conversation...</p>
+        </div>
+      </div>
+    );
   }
 
   if (user === null) {
@@ -48,7 +98,7 @@ export default function Chat() {
   }
 
   const handleDeleteConversation = () => {
-    setLocation("/");
+    setLocation("/chat");
   };
 
   const toggleSidebar = () => {

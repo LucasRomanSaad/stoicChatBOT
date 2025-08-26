@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import NotFound from "@/pages/not-found";
 import Auth from "@/pages/auth";
-import Dashboard from "@/pages/dashboard";
+
 import Chat from "@/pages/chat";
 import { useQuery } from "@tanstack/react-query";
 import { authService } from "@/lib/auth";
@@ -35,7 +35,7 @@ function AuthenticatedApp() {
     
     // Redirect away from auth if user has auth state
     if (hasAuthState && location === "/auth") {
-      setLocation("/");
+      setLocation("/chat");
       return;
     }
   }, [isLoading, location, setLocation]);
@@ -54,8 +54,9 @@ function AuthenticatedApp() {
   return (
     <Switch>
       <Route path="/auth" component={Auth} />
-      <Route path="/" component={Dashboard} />
       <Route path="/chat/:id" component={Chat} />
+      <Route path="/chat" component={Chat} />
+      <Route path="/" component={() => { setLocation("/chat"); return null; }} />
       <Route component={NotFound} />
     </Switch>
   );
