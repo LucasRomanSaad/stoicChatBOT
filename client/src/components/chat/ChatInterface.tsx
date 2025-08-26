@@ -40,6 +40,8 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/conversations", conversationId, "messages"] });
+      // Also refresh conversations list to get updated titles
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
       setMessage("");
       setIsTyping(false);
     },
@@ -167,16 +169,24 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
                 <ScrollText className="w-6 h-6 text-primary" />
               </motion.div>
               <div>
-                <motion.h2 
-                  initial={{ x: -10, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text" 
-                  data-testid="conversation-title"
-                >
-                  {currentConversation?.title || "Stoic Wisdom"}
-                </motion.h2>
-               
+                <AnimatePresence mode="wait">
+                  <motion.h2 
+                    key={currentConversation?.title || "Stoic Wisdom"}
+                    initial={{ x: -20, opacity: 0, scale: 0.9 }}
+                    animate={{ x: 0, opacity: 1, scale: 1 }}
+                    exit={{ x: 20, opacity: 0, scale: 0.9 }}
+                    transition={{ 
+                      duration: 0.4, 
+                      type: "spring", 
+                      stiffness: 150,
+                      ease: "easeOut"
+                    }}
+                    className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text" 
+                    data-testid="conversation-title"
+                  >
+                    {currentConversation?.title || "Stoic Wisdom"}
+                  </motion.h2>
+                </AnimatePresence>
               </div>
             </div>
             <motion.div

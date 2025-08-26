@@ -153,6 +153,73 @@ Please provide a thoughtful response based on these Stoic teachings. Focus on pr
             logger.error(f"Error generating response: {e}")
             raise Exception(f"Failed to generate response: {str(e)}")
     
+    def _build_title_system_prompt(self) -> str:
+        """Build the system prompt for title generation."""
+        return """You are a title generator for Stoic philosophy conversations. Generate concise, descriptive titles (3-6 words) that capture the essence of the philosophical topic being discussed.
+
+Guidelines:
+1. Focus on the main Stoic concept or theme being discussed
+2. Use clear, accessible language (not overly academic)
+3. Make it specific to the topic, not generic
+4. Avoid phrases like "New Conversation" or "Chat about"
+5. Examples: "Dealing with Criticism", "Finding Inner Peace", "Virtue vs Success", "Managing Difficult Emotions"
+
+Return ONLY the title, no additional text."""
+
+    async def generate_title(
+        self,
+        user_question: str,
+        assistant_response: str
+    ) -> str:
+        """
+        Generate a concise title for a conversation based on the first exchange.
+        
+        Args:
+            user_question: The user's initial question
+            assistant_response: The assistant's response
+            
+        Returns:
+            A concise title (3-6 words) describing the conversation topic
+        """
+        if not self.client:
+            raise Exception("LLM service not properly initialized. Check GROQ_API_KEY.")
+        
+        try:
+            # Build the user message with context
+            user_message = f"""User question: {user_question}
+
+Assistant response: {assistant_response}
+
+Generate a concise title (3-6 words) that captures the main Stoic philosophical topic being discussed."""
+
+            # Prepare messages for title generation
+            messages = [
+                {"role": "system", "content": self._build_title_system_prompt()},
+                {"role": "user", "content": user_message}
+            ]
+            
+            # Use fallback model for efficiency (title generation is simpler)
+            response = self._call_groq(messages, self.fallback_model)
+            
+            # Extract and clean the title
+            title = response.choices[0].message.content.strip()
+            
+            # Ensure title is not too long and clean it up
+            if len(title) > 50:
+                title = title[:50].rsplit(' ', 1)[0]
+            
+            # Remove quotes if present
+            title = title.strip('"').strip("'")
+            
+            logger.info(f"Generated title: {title}")
+            
+            return title
+            
+        except Exception as e:
+            logger.error(f"Error generating title: {e}")
+            # Return a fallback title rather than failing completely
+            return "Stoic Wisdom Discussion"
+    
     def _call_groq(self, messages: List[Dict[str, str]], model: str):
         """Make a call to the Groq API."""
         return self.client.chat.completions.create(

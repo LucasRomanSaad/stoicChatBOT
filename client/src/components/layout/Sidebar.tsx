@@ -205,11 +205,21 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
                         <MessageCircle className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className={`font-medium mb-1 line-clamp-1 ${
-                          currentConversationId === conversation.id ? "text-primary" : ""
-                        }`} data-testid={`conversation-title-${conversation.id}`}>
-                          {conversation.title}
-                        </h3>
+                        <AnimatePresence mode="wait">
+                          <motion.h3 
+                            key={conversation.title}
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
+                            className={`font-medium mb-1 line-clamp-1 ${
+                              currentConversationId === conversation.id ? "text-primary" : ""
+                            }`} 
+                            data-testid={`conversation-title-${conversation.id}`}
+                          >
+                            {conversation.title}
+                          </motion.h3>
+                        </AnimatePresence>
                         <p className="text-sm text-muted-foreground">
                           {formatDistanceToNow(new Date(conversation.createdAt), { addSuffix: true })}
                         </p>

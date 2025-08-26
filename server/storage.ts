@@ -24,6 +24,7 @@ export interface IStorage {
   getGuestConversation(id: string, sessionId: string): Promise<GuestConversation | undefined>;
   getGuestConversations(sessionId: string): Promise<GuestConversation[]>;
   createGuestConversation(sessionId: string, title?: string): Promise<GuestConversation>;
+  updateGuestConversationTitle(id: string, sessionId: string, title: string): Promise<void>;
   deleteGuestConversation(id: string, sessionId: string): Promise<void>;
 
   // Guest Messages
@@ -183,6 +184,22 @@ class GuestSessionStorage {
     return conversations.find(c => c.id === id);
   }
 
+  updateGuestConversationTitle(id: string, sessionId: string, title: string): void {
+    if (this.isSessionExpired(sessionId)) {
+      this.cleanupSession(sessionId);
+      return;
+    }
+    
+    this.touchSession(sessionId);
+    const conversations = this.conversations.get(sessionId) || [];
+    const conversation = conversations.find(c => c.id === id);
+    
+    if (conversation) {
+      conversation.title = title;
+      this.conversations.set(sessionId, conversations);
+    }
+  }
+
   deleteGuestConversation(id: string, sessionId: string): void {
     if (this.isSessionExpired(sessionId)) {
       this.cleanupSession(sessionId);
@@ -264,6 +281,10 @@ export class CombinedStorage extends DatabaseStorage implements IStorage {
 
   async createGuestConversation(sessionId: string, title: string = 'New Conversation'): Promise<GuestConversation> {
     return this.guestStorage.createGuestConversation(sessionId, title);
+  }
+
+  async updateGuestConversationTitle(id: string, sessionId: string, title: string): Promise<void> {
+    return this.guestStorage.updateGuestConversationTitle(id, sessionId, title);
   }
 
   async deleteGuestConversation(id: string, sessionId: string): Promise<void> {

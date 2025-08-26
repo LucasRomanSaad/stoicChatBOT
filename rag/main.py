@@ -67,6 +67,13 @@ class IngestionResponse(BaseModel):
     skipped_files: List[str]
     total_chunks: int
 
+class TitleRequest(BaseModel):
+    user_message: str
+    assistant_response: str
+
+class TitleResponse(BaseModel):
+    title: str
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
@@ -156,6 +163,28 @@ async def cleanup_knowledge_base():
         return {"message": "Knowledge base cleaned successfully", "details": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")
+
+@app.post("/generate-title", response_model=TitleResponse)
+async def generate_title(request: TitleRequest):
+    """
+    Generate a concise title for a conversation based on the first user message and assistant response.
+    
+    Args:
+        request: TitleRequest containing user_message and assistant_response
+        
+    Returns:
+        TitleResponse with generated title (3-6 words focused on Stoic themes)
+    """
+    try:
+        title = await llm_service.generate_title(
+            user_question=request.user_message,
+            assistant_response=request.assistant_response
+        )
+        
+        return TitleResponse(title=title)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Title generation failed: {str(e)}")
 
 if __name__ == "__main__":
     port = int(os.getenv("RAG_PORT", "8001"))
