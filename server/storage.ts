@@ -29,7 +29,7 @@ export interface IStorage {
 
   // Guest Messages
   getGuestConversationMessages(conversationId: string, sessionId: string): Promise<GuestMessage[]>;
-  createGuestMessage(conversationId: string, role: 'user' | 'assistant', content: string, sources?: any, responseType?: 'greeting' | 'philosophical' | 'general'): Promise<GuestMessage>;
+  createGuestMessage(conversationId: string, role: 'user' | 'assistant', content: string, sources?: any): Promise<GuestMessage>;
   deleteGuestMessage(id: string, conversationId: string, sessionId: string): Promise<void>;
 
   // Session cleanup
@@ -226,7 +226,7 @@ class GuestSessionStorage {
     return messages.filter(m => m.conversationId === conversationId).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
 
-  createGuestMessage(conversationId: string, sessionId: string, role: 'user' | 'assistant', content: string, sources?: any, responseType?: 'greeting' | 'philosophical' | 'general'): GuestMessage {
+  createGuestMessage(conversationId: string, sessionId: string, role: 'user' | 'assistant', content: string, sources?: any): GuestMessage {
     this.touchSession(sessionId);
     const message: GuestMessage = {
       id: this.generateId(),
@@ -234,7 +234,6 @@ class GuestSessionStorage {
       role,
       content,
       sources,
-      responseType: responseType || 'general',
       createdAt: new Date()
     };
     
@@ -297,13 +296,13 @@ export class CombinedStorage extends DatabaseStorage implements IStorage {
     return this.guestStorage.getGuestConversationMessages(conversationId, sessionId);
   }
 
-  async createGuestMessage(conversationId: string, role: 'user' | 'assistant', content: string, sources?: any, responseType?: 'greeting' | 'philosophical' | 'general'): Promise<GuestMessage> {
+  async createGuestMessage(conversationId: string, role: 'user' | 'assistant', content: string, sources?: any): Promise<GuestMessage> {
     // We need sessionId but it's not in the interface signature, we'll handle this in routes
     throw new Error('Use createGuestMessageWithSession instead');
   }
 
-  async createGuestMessageWithSession(conversationId: string, sessionId: string, role: 'user' | 'assistant', content: string, sources?: any, responseType?: 'greeting' | 'philosophical' | 'general'): Promise<GuestMessage> {
-    return this.guestStorage.createGuestMessage(conversationId, sessionId, role, content, sources, responseType);
+  async createGuestMessageWithSession(conversationId: string, sessionId: string, role: 'user' | 'assistant', content: string, sources?: any): Promise<GuestMessage> {
+    return this.guestStorage.createGuestMessage(conversationId, sessionId, role, content, sources);
   }
 
   async deleteGuestMessage(id: string, conversationId: string, sessionId: string): Promise<void> {

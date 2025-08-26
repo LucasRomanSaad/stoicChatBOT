@@ -332,16 +332,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           req.sessionId,
           'assistant',
           ragData.answer,
-          ragData.sources,
-          ragData.response_type
+          ragData.sources
         );
       } else {
         assistantMessage = await storage.createMessage({
           conversationId: parseInt(conversationId),
           role: 'assistant',
           content: ragData.answer,
-          sources: ragData.sources,
-          responseType: ragData.response_type
+          sources: ragData.sources
         });
       }
 

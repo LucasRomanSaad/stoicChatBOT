@@ -23,9 +23,6 @@ export const conversations = pgTable("conversations", {
 // Message role enum
 export const roleEnum = pgEnum("role", ["user", "assistant"]);
 
-// Response type enum for conditional source rendering
-export const responseTypeEnum = pgEnum("response_type", ["greeting", "philosophical", "general"]);
-
 // Messages table
 export const messages = pgTable("messages", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
@@ -33,7 +30,6 @@ export const messages = pgTable("messages", {
   role: roleEnum("role").notNull(),
   content: text("content").notNull(),
   sources: jsonb("sources"),
-  responseType: responseTypeEnum("response_type").notNull().default("general"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`NOW()`),
 });
 
@@ -73,7 +69,6 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
   role: true,
   content: true,
   sources: true,
-  responseType: true,
 });
 
 // Auth schemas
@@ -117,7 +112,6 @@ export type Source = {
 export type ChatResponse = {
   answer: string;
   sources: Source[];
-  response_type: 'greeting' | 'philosophical' | 'general';
   usage: {
     tokens_prompt: number;
     tokens_completion: number;
@@ -139,6 +133,5 @@ export type GuestMessage = {
   role: 'user' | 'assistant';
   content: string;
   sources?: Source[];
-  responseType?: 'greeting' | 'philosophical' | 'general';
   createdAt: Date;
 };

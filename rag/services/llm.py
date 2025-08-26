@@ -219,16 +219,8 @@ Please provide a thoughtful response based on these Stoic teachings. Focus on pr
             
             logger.info(f"Generated response using {model_used}")
             
-            # Determine response type based on query analysis
-            response_type = "greeting" if is_greeting else "general"
-            
-            # If not a greeting and we have good quality sources, it's philosophical
-            if not is_greeting and self._check_source_quality(sources):
-                response_type = "philosophical"
-            
             return {
                 "answer": answer,
-                "response_type": response_type,
                 "usage": usage_info
             }
             
