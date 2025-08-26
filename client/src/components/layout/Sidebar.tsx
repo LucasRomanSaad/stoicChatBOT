@@ -28,6 +28,7 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
   const { data: conversations } = useQuery({
     queryKey: ["/api/conversations"],
     queryFn: conversationService.getConversations,
+    refetchInterval: 1000, 
   });
 
   const { data: meData } = useQuery({

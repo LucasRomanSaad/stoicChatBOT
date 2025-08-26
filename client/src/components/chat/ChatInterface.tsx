@@ -38,16 +38,13 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
     mutationFn: (content: string) => conversationService.sendMessage(conversationId, content),
     onMutate: () => {
       setIsTyping(true);
-      // Check if this might trigger title generation (for new conversations)
       if (!messages || messages.length === 0) {
         setIsTitleGenerating(true);
       }
     },
     onSuccess: () => {
-      // Invalidate messages first to get the new messages
       queryClient.invalidateQueries({ queryKey: ["/api/conversations", conversationId, "messages"] });
       
-      // Invalidate conversations list to get updated titles (including newly generated ones)
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
       
       setMessage("");
