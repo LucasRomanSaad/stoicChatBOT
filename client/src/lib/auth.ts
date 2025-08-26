@@ -27,7 +27,7 @@ export const authService = {
     const response = await apiRequest("POST", "/api/auth/login", data);
     const result = await response.json();
     localStorage.setItem("auth_token", result.token);
-    localStorage.removeItem("guest_mode"); // Clear guest mode when logging in
+    localStorage.removeItem("guest_mode"); 
     return result;
   },
 
@@ -35,7 +35,7 @@ export const authService = {
     const response = await apiRequest("POST", "/api/auth/register", data);
     const result = await response.json();
     localStorage.setItem("auth_token", result.token);
-    localStorage.removeItem("guest_mode"); // Clear guest mode when registering
+    localStorage.removeItem("guest_mode"); 
     return result;
   },
 

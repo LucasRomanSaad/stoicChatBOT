@@ -38,7 +38,7 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
   const { data: messages, isLoading, error: messagesError } = useQuery({
     queryKey: ["/api/conversations", conversationId, "messages"],
     queryFn: () => conversationService.getMessages(conversationId),
-    retry: false, // Don't retry if conversation doesn't exist
+    retry: false, 
   });
 
   const { data: conversations = [] } = useQuery({
@@ -135,7 +135,7 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
     setShowDeleteDialog(false);
   };
 
-  // Handle case where conversation doesn't exist
+  
   if (messagesError && !isLoading) {
     return (
       <motion.div 

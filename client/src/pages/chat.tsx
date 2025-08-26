@@ -73,7 +73,6 @@ export default function Chat() {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
-  // Show empty state if no conversations exist
   if (user !== null && conversations !== undefined && conversations.length === 0) {
     return (
       <div className="h-screen bg-background">
