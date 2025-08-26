@@ -1,0 +1,295 @@
+Here’s a single, copy-paste **build prompt** you can give to an AI agent to implement the whole app.
+
+---
+
+# Build a “Personal Stoic Guide” RAG Web App (Groq + Python RAG + Node/Express + PostgreSQL + React)
+
+## Mission
+
+Design and implement a production-ready, modern web application called **Personal Stoic Guide**. It is a chatbot powered by a **Python RAG pipeline** over a fixed corpus of Stoic PDFs stored in the repo. The LLM layer uses **Groq**. The app supports **user accounts**, **separate chat sessions**, **chat history per session**, and **source citations with similarity scores** for every AI answer. PDFs are **ingested exactly once** (unless files change).
+
+## Hard Requirements
+
+1. **AI/RAG (Python only):**
+
+   * Keep **all AI logic in Python** (RAG, embeddings, retrieval, prompt, Groq calls).
+   * Use **ChromaDB** (persistent) for vector storage.
+   * Use a **Sentence-Transformers** embedding model (free) for document/queries.
+   * **Ingest PDFs once** at startup or via CLI/admin endpoint. Re-ingest only if a file changed (use file hashing). Idempotent ingestion.
+   * RAG flow: retrieve top-k chunks → build context → call **Groq LLM** → return answer **with citations** (title / chunk\_id / page if available) **and similarity scores**.
+   * Default Groq model: `llama3-70b-8192`. Provide fallback to `llama3-8b-8192` if the first is unavailable.
+   * Never expose `GROQ_API_KEY` to the frontend.
+
+2. **Backend (Node.js + Express + PostgreSQL):**
+
+   * Acts as the **web API & auth** layer, and the **gateway** to the Python RAG service.
+   * Implement **user registration/login**, **stateless session tokens**, secure password storage, and **RBAC-ready** structure.
+     **Do not hardcode any particular auth libraries**—choose best-in-class solutions yourself.
+   * Data model:
+
+     * `users(id, email UNIQUE, password_hash, created_at)`
+     * `conversations(id, user_id FK->users.id, title, created_at)`
+     * `messages(id, conversation_id FK->conversations.id, role ENUM('user','assistant'), content TEXT, sources JSONB NULL, created_at)`
+   * The **conversations are isolated**: chat history does not cross conversations. Within a conversation, messages append in order.
+   * Endpoints (JSON):
+
+     * `POST /auth/register` → create account.
+     * `POST /auth/login` → return token.
+     * `GET /me` → current user profile.
+     * `POST /conversations` → create a new conversation; returns `conversation_id`.
+     * `GET /conversations` → list current user’s conversations.
+     * `GET /conversations/:id/messages` → list messages for that conversation (ordered).
+     * `POST /conversations/:id/messages` → body `{ content: string }`.
+       Server forwards to **Python RAG** service; persists both user message and assistant reply (including `sources` with similarity).
+     * Optional: `DELETE /conversations/:id`, `DELETE /messages/:id`.
+   * Include **input validation**, rate limiting, and CORS config.
+   * Use migrations for PostgreSQL schema.
+
+3. **Python RAG Service (FastAPI or similar)**
+
+   * Endpoints:
+
+     * `POST /ingest` (secured; callable only from Node backend or CLI) → ingest PDFs in `/data/pdfs` (or configurable path). Idempotent via file hashes.
+     * `POST /chat` → body `{ conversation_context?: Message[], query: string, top_k?: number }`
+
+       * `Message = { role: 'user'|'assistant' , content: string }` (optional short context from Node for same conversation).
+       * Returns:
+
+         ```json
+         {
+           "answer": "string",
+           "sources": [
+             {
+               "title": "Meditations_doc3",
+               "chunk_id": "Meditations_doc3_17",
+               "page": 42,
+               "similarity": 0.912,
+               "snippet": "short relevant passage..."
+             }
+           ],
+           "usage": { "tokens_prompt": n, "tokens_completion": m, "model": "llama3-70b-8192" }
+         }
+         ```
+     * `GET /health` → ok.
+   * On startup: load persistent Chroma index. If empty, log warning with instructions to run `/ingest` or CLI.
+
+4. **Frontend (React)**
+
+   * **TypeScript React** app with a **modern, professional** look.
+   * **Framer Motion** for polished animations (page transitions, message fade/slide-in, hover micro-interactions, empty-state reveals).
+   * Fully responsive (mobile → desktop). Light/Dark theme toggle.
+   * Main Screens:
+
+     * **Auth**: Sign in / Sign up.
+     * **Conversations Dashboard**: list of user’s conversations; “New conversation”.
+     * **Chat Screen**:
+
+       * Left sidebar: conversations list (collapsible).
+       * Main pane: chat messages (user vs assistant bubbles).
+       * Each assistant message shows **“Sources”** under it: a list of citations with **title**, **chunk\_id**/**page**, **similarity score**, and a short **snippet**; clicking a source expands to show more of the chunk.
+       * Composer: multiline input + Send.
+       * Subtle **Framer Motion** effects for incoming messages and source expansions.
+     * **Settings**: theme, account, sign out.
+   * No API keys or secrets in client code. All requests go to Node backend.
+
+5. **Citations & Similarity (UI + API)**
+
+   * For every assistant response, display **source list** with:
+
+     * `title`
+     * `chunk_id` (or humanized “Section n”)
+     * `page` (if available)
+     * `similarity` (rounded to 3 decimals)
+     * `snippet` (short excerpt)
+   * Include a small “What is this?” tooltip explaining similarity scores and RAG sources.
+
+6. **One-Time Ingestion**
+
+   * PDFs shipped in the repository under `/data/pdfs` (e.g., *Meditations*, *Letters from a Stoic*, *Discourses*, etc.).
+   * Compute file hash per PDF; store a manifest (e.g., `ingestion_manifest.json`) with `{ filename, hash, doc_id }`.
+   * On `/ingest`, if hash unchanged and doc present in Chroma, skip.
+   * Chunking defaults: `chunk_size ≈ 1000 chars`, `chunk_overlap ≈ 200`.
+   * Store metadata: `{ title, chunk_id, page, source_path }`.
+   * Provide a **CLI** command to run ingestion locally (calls Python ingestion routine directly).
+
+7. **Conversation Handling**
+
+   * **Isolation**: conversations are not connected to each other.
+   * In Node, when calling Python `/chat`, pass the **last N messages** of the same conversation (`N` configurable, e.g., 6) as optional context to help the answer stay on-topic.
+   * Persist both user message and assistant message in DB; store sources JSON with each assistant message only.
+
+8. **Dev Experience & Quality**
+
+   * **Monorepo** structure with `docker-compose`:
+
+     ```
+     /app
+       /frontend  (React TS)
+       /api       (Node Express)
+       /rag       (Python FastAPI)
+       /data/pdfs (Stoic PDFs)
+       /infra     (compose, nginx, etc.)
+     ```
+   * `.env.example` files for each service:
+
+     * Node: `DATABASE_URL`, `JWT_*` or equivalent, `RAG_SERVICE_URL`, `PORT`.
+     * Python: `GROQ_API_KEY`, `CHROMA_PATH`, `EMBEDDING_MODEL`, `PORT`.
+     * Postgres: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`.
+   * **Dockerfiles** for each service and a **docker-compose.yml** that brings up:
+
+     * `postgres`
+     * `api` (Node)
+     * `rag` (Python)
+     * `frontend` (built & served or proxied)
+   * Reverse proxy (optional) for clean routing: `/api/*` → Node, `/rag/*` → Python.
+
+9. **Security**
+
+   * Backend token-based auth; secure password storage; CSRF-safe patterns; CORS configured.
+   * Validate and sanitize all inputs.
+   * Do not log secrets; redact tokens in logs.
+   * Protect `/ingest` endpoint (admin-only) or run ingestion via CLI in the `rag` container.
+
+10. **Testing & Acceptance**
+
+* Unit tests for:
+
+  * RAG retrieval correctness (returns top-k with decreasing similarity).
+  * Ingestion idempotency (no duplicate chunks when unchanged).
+  * Node controllers (auth, conversations, messages).
+* Integration tests for the `/conversations/:id/messages` flow:
+
+  * Create conversation → send message → store assistant reply with sources → retrieve messages.
+* Manual acceptance checklist:
+
+  * PDFs are processed once; re-running ingestion skips unchanged files.
+  * Chat shows sources with similarity for every assistant reply.
+  * Starting a new conversation yields an empty history (isolation).
+  * Logging in as another user shows **only** their conversations.
+  * Frontend animations are smooth and unobtrusive.
+
+## Implementation Details & Contracts
+
+### PostgreSQL Schema (SQL reference)
+
+```sql
+CREATE TABLE users (
+  id BIGSERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE conversations (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT 'New Conversation',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TYPE role AS ENUM ('user','assistant');
+
+CREATE TABLE messages (
+  id BIGSERIAL PRIMARY KEY,
+  conversation_id BIGINT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  role role NOT NULL,
+  content TEXT NOT NULL,
+  sources JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_messages_conversation_id_created_at ON messages(conversation_id, created_at);
+```
+
+### Node ↔ Python Contract
+
+* **Node → Python `/chat`**:
+
+  ```json
+  {
+    "query": "What is a good Stoic?",
+    "conversation_context": [
+      {"role":"user","content":"..."},
+      {"role":"assistant","content":"..."}
+    ],
+    "top_k": 3
+  }
+  ```
+* **Python → Node response**:
+
+  ```json
+  {
+    "answer": "A good Stoic ...",
+    "sources": [
+      {
+        "title": "Meditations_doc1",
+        "chunk_id": "Meditations_doc1_7",
+        "page": 12,
+        "similarity": 0.934,
+        "snippet": "From Marcus Aurelius: ..."
+      }
+    ],
+    "usage": {"tokens_prompt": 123, "tokens_completion": 256, "model": "llama3-70b-8192"}
+  }
+  ```
+
+### Python RAG Notes
+
+* Use your existing chunking approach (RecursiveCharacterTextSplitter).
+* Store and query with Chroma persistent client.
+* Convert distances to similarity: `similarity = 1 - distance` (cosine).
+* Prompt style (system prompt idea):
+
+  * “You are a Stoic guide. Answer using the retrieved sources only. Cite each answer with sources and explain deltas if sources conflict. Keep tone calm, clear, practical.”
+* Include a guardrail: if retrieval similarity is too low (e.g., `< 0.5`), respond with “I’m not confident this is in the Stoic texts” and still show the top sources transparently.
+
+### Frontend UX Notes
+
+* Use **Framer Motion**:
+
+  * Page transitions (fade + slight upward translate).
+  * Message bubbles: staggered fade/slide on mount.
+  * Sources: accordion expand with spring.
+  * Hover micro-interactions on buttons/cards.
+* Visual design:
+
+  * Clean, professional typography, generous spacing, subtle shadows.
+  * Dark/Light themes; maintain accessible contrast.
+* Chat message layout:
+
+  * Assistant messages include a “Sources (k)” section with a list:
+
+    * `title` · `page` · `similarity`
+    * Expand to show `snippet`.
+
+## Deliverables
+
+1. **Monorepo** with `frontend/`, `api/`, `rag/`, `data/pdfs/`, `infra/`.
+2. **Working docker-compose** that boots Postgres, Node API, Python RAG, and serves the React app.
+3. **.env.example** files for all services and a short **README**:
+
+   * How to ingest PDFs (CLI or `/ingest`).
+   * How to run the stack.
+   * How to run tests.
+4. **Seed script** to create a demo user and a couple of conversations/messages.
+5. **Screenshots or short GIF** of the UI to validate animations (optional but appreciated).
+
+## Environment Variables (placeholders)
+
+* **Python RAG**:
+  `GROQ_API_KEY`, `CHROMA_PATH=./research_db`, `EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2`, `RAG_PORT=8001`
+* **Node API**:
+  `DATABASE_URL`, `TOKEN_SECRET` (or equivalent), `RAG_SERVICE_URL=http://rag:8001`, `API_PORT=8000`
+* **Postgres**:
+  `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+
+## Definition of Done
+
+* End-to-end flow works: user registers → creates a conversation → asks a question → sees an answer with **citations + similarity** → conversation is saved and isolated → reloading shows the same history.
+* Re-running ingestion without PDF changes does **not** duplicate records.
+* App looks polished and responsive with tasteful Framer Motion animations.
+* No secrets in client code; backends validate inputs; basic tests pass.
+
+---
+
+**Build this exactly as specified. If you need to make tradeoffs, prefer correctness, security, and UX polish.**
