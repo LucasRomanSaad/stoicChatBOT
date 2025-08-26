@@ -195,8 +195,8 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
                     transition={{ duration: 0.2 }}
                     className={`rounded-lg p-3 cursor-pointer transition-all duration-200 ${
                       currentConversationId === conversation.id
-                        ? "bg-primary/10 border border-primary"
-                        : "hover:bg-muted"
+                        ? "bg-primary/15 border-2 border-primary shadow-lg shadow-primary/20 ring-1 ring-primary/30"
+                        : "hover:bg-muted border border-transparent"
                     }`}
                     onClick={() => setLocation(`/chat/${conversation.id}`)}
                     data-testid={`conversation-item-${conversation.id}`}
@@ -214,7 +214,7 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                             transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
                             className={`font-medium mb-1 line-clamp-1 ${
-                              currentConversationId === conversation.id ? "text-primary" : ""
+                              currentConversationId === conversation.id ? "text-primary font-semibold" : ""
                             }`} 
                             data-testid={`conversation-title-${conversation.id}`}
                           >
