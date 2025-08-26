@@ -79,10 +79,8 @@ function startRagService() {
 }
 
 (async () => {
-  // Start the RAG service first
   if (process.env.NODE_ENV === 'production') {
     startRagService();
-    // Give RAG service time to start
     await new Promise(resolve => setTimeout(resolve, 3000));
   }
 
