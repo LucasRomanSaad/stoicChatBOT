@@ -73,7 +73,7 @@ export default function Chat() {
         setLocation(`/chat/${mostRecent.id}`);
       }
     }
-  }, [user, conversationId, conversations, createConversationMutation, setLocation]);
+  }, [user, conversationId, conversations, setLocation]);
 
   if (!conversationId) {
     return (
