@@ -1,0 +1,69 @@
+AI Agent Prompt: Implement Auto-Generated Conversation Titles with Smooth Transitions
+
+You are tasked with adding AI-generated conversation titles to a Personal Stoic Guide RAG application. Currently, conversations use fallback titles like "New Conversation" because there's no title generation system. You need to implement this functionality with the following requirements:
+
+Core Requirements:
+
+Title Generation Logic: Generate titles after the first user message and AI response are complete, using both the question and answer for context
+Timing: Trigger title generation only for the first message exchange (when conversation has exactly 2 messages)
+Backend Integration: Add title generation to the existing message sending endpoint in server/routes.ts
+RAG Service Extension: Create a new endpoint in the Python RAG service (rag/main.py) specifically for title generation
+Smooth Transitions: Implement visual transition effects when the title changes from "New Conversation" to the AI-generated title
+Error Handling: Graceful fallback to default title if generation fails
+Technical Implementation Details:
+
+Backend Changes (server/routes.ts):
+
+Modify the POST /api/conversations/:id/messages endpoint
+After successfully generating the assistant's response, check if this is the first exchange
+If so, call the new RAG title generation endpoint
+Update the conversation title in the database using existing Drizzle ORM patterns
+Ensure this works for both authenticated users and guest sessions
+RAG Service Changes (rag/main.py):
+
+Add a new /generate-title endpoint that accepts user question and assistant response
+Use a focused prompt for generating concise titles (3-6 words)
+Use the faster fallback model (llama3-8b-8192) for efficiency
+Return just the generated title string
+LLM Service Changes (rag/services/llm.py):
+
+Add a new method generate_title() to the LLMService class
+Create a specific system prompt for title generation focused on Stoic themes
+Keep titles concise, relevant, and descriptive of the philosophical topic
+Frontend Changes:
+
+Sidebar (client/src/components/layout/Sidebar.tsx): Add smooth transition animations when conversation titles update
+Chat Interface (client/src/components/chat/ChatInterface.tsx): Implement title transition effects in the header
+Use Framer Motion for smooth animations (already imported)
+Consider using AnimatePresence or motion.div with layout animations
+Animation Requirements:
+
+When title changes from "New Conversation" to generated title, use a fade-out/fade-in effect
+Add a subtle scale or slide animation to draw attention to the new title
+Ensure animations are smooth and don't disrupt the chat experience
+Use consistent timing with existing animations in the app (around 0.3-0.5s duration)
+Data Flow:
+
+User sends first message → Backend saves user message
+RAG service generates assistant response → Backend saves assistant response
+Backend detects this is first exchange → Calls title generation
+RAG service generates title → Backend updates conversation in database
+Frontend queries refresh → New title appears with smooth transition animation
+Sidebar and chat header both show updated title with animations
+Error Handling:
+
+If title generation fails, conversation keeps default title
+Log errors but don't break the chat functionality
+Implement appropriate fallbacks for both user and guest sessions
+Database Considerations:
+
+Use existing conversation update patterns with Drizzle ORM
+Ensure proper handling of both numeric IDs (users) and string IDs (guests)
+Maintain data consistency across the hybrid storage system
+Performance Notes:
+
+Only generate titles for first message exchange
+Use faster LLM model for title generation
+Don't block the main chat response with title generation
+Consider making title generation async if needed
+Implement all necessary changes across the full stack to deliver this feature with polished user experience and smooth animations.

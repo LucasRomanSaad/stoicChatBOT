@@ -150,9 +150,25 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
           <Button
             onClick={handleCreateConversation}
             disabled={createConversationMutation.isPending}
-            className="w-full"
             data-testid="button-new-conversation"
+            className="
+                px-4 py-2 rounded-full text-sm font-medium
+                transition-all duration-200 transform
+                shadow-sm
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+                disabled:opacity-50 disabled:cursor-not-allowed
+                motion-reduce:transition-none motion-reduce:transform-none
+
+                w-full mx-2
+                bg-white text-gray-800 border border-gray-200
+                hover:bg-blue-500 hover:text-white hover:border-blue-400 hover:shadow-md hover:scale-105
+
+                dark:bg-gray-800 dark:text-white/80 dark:border-primary/20
+                dark:hover:bg-blue-600 dark:hover:text-white dark:hover:border-primary/30
+              "
+            
           >
+            
             <Plus className="w-4 h-4 mr-2" />
             New Conversation
           </Button>
