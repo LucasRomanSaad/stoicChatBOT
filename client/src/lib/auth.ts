@@ -76,5 +76,9 @@ export const authService = {
 
   isLoggedInOrGuest(): boolean {
     return this.isAuthenticated() || this.isGuest();
+  },
+
+  hasAuthState(): boolean {
+    return this.isAuthenticated() || this.isGuest();
   }
 };
