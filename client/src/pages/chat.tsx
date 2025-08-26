@@ -69,6 +69,10 @@ export default function Chat() {
     }
   }, [user, conversationId, conversations, setLocation]);
 
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   // Show empty state if no conversations exist
   if (user !== null && conversations !== undefined && conversations.length === 0) {
     return (
@@ -167,10 +171,6 @@ export default function Chat() {
 
   const handleDeleteConversation = () => {
     setLocation("/chat");
-  };
-
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
   return (
