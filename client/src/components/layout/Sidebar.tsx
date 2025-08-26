@@ -1,0 +1,233 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "wouter";
+import { conversationService } from "@/lib/api";
+import { authService } from "@/lib/auth";
+import { useTheme } from "./ThemeProvider";
+import { Button } from "@/components/ui/button";
+import { ScrollText, Plus, Settings, Moon, Sun, LogOut, MessageCircle } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
+import { SettingsModal } from "@/components/modals/SettingsModal";
+
+interface SidebarProps {
+  currentConversationId?: number;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+}
+
+export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
+  const [, setLocation] = useLocation();
+  const { theme, toggleTheme } = useTheme();
+  const [showSettings, setShowSettings] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: conversations } = useQuery({
+    queryKey: ["/api/conversations"],
+    queryFn: conversationService.getConversations,
+  });
+
+  const { data: user } = useQuery({
+    queryKey: ["/api/me"],
+    queryFn: authService.getCurrentUser,
+  });
+
+  const createConversationMutation = useMutation({
+    mutationFn: conversationService.createConversation,
+    onSuccess: (newConversation) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      setLocation(`/chat/${newConversation.id}`);
+    },
+  });
+
+  const handleCreateConversation = () => {
+    createConversationMutation.mutate();
+  };
+
+  const handleSignOut = () => {
+    authService.logout();
+    setLocation("/auth");
+  };
+
+  const getUserInitials = (email: string) => {
+    return email.charAt(0).toUpperCase();
+  };
+
+  if (isCollapsed) {
+    return (
+      <motion.div
+        initial={{ width: 320 }}
+        animate={{ width: 64 }}
+        transition={{ duration: 0.3 }}
+        className="bg-card border-r border-border flex flex-col"
+      >
+        <div className="p-4 border-b border-border">
+          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+            <ScrollText className="w-5 h-5 text-primary" />
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCreateConversation}
+            disabled={createConversationMutation.isPending}
+            className="w-full p-2 justify-center"
+            data-testid="button-new-conversation-collapsed"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
+        <div className="p-2 border-t border-border space-y-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleTheme}
+            className="w-full p-2 justify-center"
+            data-testid="button-theme-toggle-collapsed"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowSettings(true)}
+            className="w-full p-2 justify-center"
+            data-testid="button-settings-collapsed"
+          >
+            <Settings className="w-4 h-4" />
+          </Button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <>
+      <motion.div
+        initial={{ width: 64 }}
+        animate={{ width: 320 }}
+        transition={{ duration: 0.3 }}
+        className="bg-card border-r border-border flex flex-col"
+      >
+        {/* Header */}
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <ScrollText className="w-5 h-5 text-primary" />
+              </div>
+              <h1 className="text-lg font-semibold text-primary">Stoic Guide</h1>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme}
+                className="p-2"
+                data-testid="button-theme-toggle"
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSettings(true)}
+                className="p-2"
+                data-testid="button-settings"
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          <Button
+            onClick={handleCreateConversation}
+            disabled={createConversationMutation.isPending}
+            className="w-full"
+            data-testid="button-new-conversation"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Conversation
+          </Button>
+        </div>
+
+        {/* Conversations List */}
+        <div className="flex-1 overflow-y-auto p-4">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
+            Recent Conversations
+          </h2>
+
+          <div className="space-y-2">
+            <AnimatePresence>
+              {conversations?.map((conversation) => (
+                <motion.div
+                  key={conversation.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className={`rounded-lg p-3 cursor-pointer transition-all duration-200 ${
+                    currentConversationId === conversation.id
+                      ? "bg-primary/10 border border-primary"
+                      : "hover:bg-muted"
+                  }`}
+                  onClick={() => setLocation(`/chat/${conversation.id}`)}
+                  data-testid={`conversation-item-${conversation.id}`}
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0">
+                      <MessageCircle className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className={`font-medium mb-1 line-clamp-1 ${
+                        currentConversationId === conversation.id ? "text-primary" : ""
+                      }`} data-testid={`conversation-title-${conversation.id}`}>
+                        {conversation.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {formatDistanceToNow(new Date(conversation.createdAt), { addSuffix: true })}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* User Profile */}
+        <div className="p-4 border-t border-border">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <span className="text-white text-sm font-medium" data-testid="user-initials">
+                {user?.email ? getUserInitials(user.email) : "U"}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate" data-testid="user-email">
+                {user?.email || "Loading..."}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="p-1.5"
+              data-testid="button-sign-out"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+
+      <SettingsModal 
+        open={showSettings} 
+        onOpenChange={setShowSettings}
+        user={user}
+        onSignOut={handleSignOut}
+      />
+    </>
+  );
+}

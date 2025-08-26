@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-stoic_guide}
+      POSTGRES_USER: ${POSTGRES_USER:-stoic_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stoic_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stoic_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rag:
+    build:
+      context: ./rag
+      dockerfile: Dockerfile
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      CHROMA_PATH: /app/research_db
+      EMBEDDING_MODEL: sentence-transformers/all-MiniLM-L6-v2
+      PDFS_PATH: /app/data/pdfs
+      RAG_PORT: 8001
+    volumes:
+      - ./data/pdfs:/app/data/pdfs:ro
+      - rag_data:/app/research_db
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-stoic_user}:${POSTGRES_PASSWORD:-stoic_password}@postgres:5432/${POSTGRES_DB:-stoic_guide}
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      RAG_SERVICE_URL: http://rag:8001
+      PORT: 5000
+      NODE_ENV: production
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rag:
+        condition: service_healthy
+    volumes:
+      - ./dist/public:/app/public:ro
+
+volumes:
+  postgres_data:
+  rag_data:
