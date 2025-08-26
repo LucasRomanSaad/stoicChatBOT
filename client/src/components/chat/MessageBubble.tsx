@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Message } from "@shared/schema";
+import { Message, GuestMessage } from "@shared/schema";
 import { SourceCitation } from "./SourceCitation";
 import { Brain, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 interface MessageBubbleProps {
-  message: Message;
+  message: Message | GuestMessage;
   isLast?: boolean;
 }
 
@@ -63,7 +63,7 @@ export function MessageBubble({ message, isLast }: MessageBubbleProps) {
                 </div>
               </motion.div>
 
-              {message.sources && Array.isArray(message.sources) && message.sources.length > 0 && (
+              {message.sources && Array.isArray(message.sources) && message.sources.length > 0 && message.responseType === 'philosophical' && (
                 <SourceCitation sources={message.sources} />
               )}
 
