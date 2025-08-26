@@ -28,7 +28,7 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
   const { data: conversations } = useQuery({
     queryKey: ["/api/conversations"],
     queryFn: conversationService.getConversations,
-    refetchInterval: 1000, 
+    refetchInterval: 2000, 
   });
 
   const { data: meData } = useQuery({
@@ -202,24 +202,22 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
                     data-testid={`conversation-item-${conversation.id}`}
                   >
                     <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0">
-                        <MessageCircle className="w-4 h-4" />
-                      </div>
+                      
                       <div className="flex-1 min-w-0">
                         <AnimatePresence mode="wait">
-                          <motion.h3 
+                          <motion.h5 
                             key={conversation.title}
                             initial={{ opacity: 0, y: -10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                             transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
-                            className={`font-medium mb-1 line-clamp-1 ${
+                            className={`font-medium mb-1 ${
                               currentConversationId?.toString() === conversation.id.toString() ? "text-primary font-semibold" : ""
                             }`} 
                             data-testid={`conversation-title-${conversation.id}`}
                           >
                             {conversation.title}
-                          </motion.h3>
+                          </motion.h5>
                         </AnimatePresence>
                         <p className="text-sm text-muted-foreground">
                           {formatDistanceToNow(new Date(conversation.createdAt), { addSuffix: true })}
