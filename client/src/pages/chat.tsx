@@ -106,7 +106,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="h-screen bg-background flex">
+    <div className="h-screen bg-background">
       {/* Mobile Menu Button */}
       {isMobile && (
         <Button
@@ -128,17 +128,17 @@ export default function Chat() {
         />
       )}
 
-      {/* Sidebar */}
-      <div className={`${isMobile ? 'fixed left-0 top-0 h-full z-50' : 'relative'} ${isMobile && isSidebarCollapsed ? '-translate-x-full' : 'translate-x-0'} transition-transform duration-300`}>
-        <Sidebar
-          currentConversationId={conversationId}
-          isCollapsed={!isMobile && isSidebarCollapsed}
-          onToggleCollapse={toggleSidebar}
-        />
-      </div>
+      {/* Sidebar - Always Fixed */}
+      <Sidebar
+        currentConversationId={conversationId}
+        isCollapsed={isMobile ? isSidebarCollapsed : (!isMobile && isSidebarCollapsed)}
+        onToggleCollapse={toggleSidebar}
+      />
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main Chat Area with proper margin */}
+      <div className={`h-full flex flex-col transition-all duration-300 ${
+        isMobile ? 'ml-0' : (isSidebarCollapsed ? 'ml-16' : 'ml-80')
+      }`}>
         <ChatInterface
           conversationId={conversationId}
           onDeleteConversation={handleDeleteConversation}

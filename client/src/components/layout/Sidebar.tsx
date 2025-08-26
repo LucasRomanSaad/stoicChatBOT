@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
@@ -5,6 +6,7 @@ import { conversationService } from "@/lib/api";
 import { authService } from "@/lib/auth";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ScrollText, Plus, Settings, Moon, Sun, LogOut, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
@@ -63,7 +65,7 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
         initial={{ width: 320 }}
         animate={{ width: 64 }}
         transition={{ duration: 0.3 }}
-        className="bg-card border-r border-border flex flex-col"
+        className="fixed left-0 top-0 h-screen bg-card border-r border-border flex flex-col z-30"
       >
         <div className="p-4 border-b border-border">
           <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -112,10 +114,10 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
         initial={{ width: 64 }}
         animate={{ width: 320 }}
         transition={{ duration: 0.3 }}
-        className="bg-card border-r border-2 border-blue-500 flex flex-col"
+        className="fixed left-0 top-0 h-screen bg-card border-r border-2 border-blue-500 flex flex-col z-30"
       >
         {/* Header */}
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-border flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -156,52 +158,56 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
           </Button>
         </div>
 
-        {/* Conversations List */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
-            Recent Conversations
-          </h2>
-
-          <div className="space-y-2">
-            <AnimatePresence>
-              {conversations?.map((conversation) => (
-                <motion.div
-                  key={conversation.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className={`rounded-lg p-3 cursor-pointer transition-all duration-200 ${
-                    currentConversationId === conversation.id
-                      ? "bg-primary/10 border border-primary"
-                      : "hover:bg-muted"
-                  }`}
-                  onClick={() => setLocation(`/chat/${conversation.id}`)}
-                  data-testid={`conversation-item-${conversation.id}`}
-                >
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0">
-                      <MessageCircle className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`font-medium mb-1 line-clamp-1 ${
-                        currentConversationId === conversation.id ? "text-primary" : ""
-                      }`} data-testid={`conversation-title-${conversation.id}`}>
-                        {conversation.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(conversation.createdAt), { addSuffix: true })}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+        {/* Conversations List with Scroll Area */}
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="p-4 pb-2 flex-shrink-0">
+            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              Recent Conversations
+            </h2>
           </div>
+          
+          <ScrollArea className="flex-1 px-4">
+            <div className="space-y-2 pb-4">
+              <AnimatePresence>
+                {conversations?.map((conversation) => (
+                  <motion.div
+                    key={conversation.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className={`rounded-lg p-3 cursor-pointer transition-all duration-200 ${
+                      currentConversationId === conversation.id
+                        ? "bg-primary/10 border border-primary"
+                        : "hover:bg-muted"
+                    }`}
+                    onClick={() => setLocation(`/chat/${conversation.id}`)}
+                    data-testid={`conversation-item-${conversation.id}`}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0">
+                        <MessageCircle className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`font-medium mb-1 line-clamp-1 ${
+                          currentConversationId === conversation.id ? "text-primary" : ""
+                        }`} data-testid={`conversation-title-${conversation.id}`}>
+                          {conversation.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(conversation.createdAt), { addSuffix: true })}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </ScrollArea>
         </div>
 
-        {/* User Profile */}
-        <div className="p-4 border-t border-border">
+        {/* User Profile - Fixed at Bottom */}
+        <div className="p-4 border-t border-border flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
               <span className="text-white text-sm font-medium" data-testid="user-initials">
