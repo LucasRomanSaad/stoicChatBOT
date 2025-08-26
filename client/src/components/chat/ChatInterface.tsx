@@ -181,7 +181,7 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
               <div>
                 <AnimatePresence mode="wait">
                   <motion.h2 
-                    key={`${conversationId}-${currentConversation?.title || "Stoic Wisdom"}`}
+                    key={`${currentConversation?.title || "Stoic Wisdom"}`}
                     initial={{ x: -20, opacity: 0, scale: 0.9 }}
                     animate={{ x: 0, opacity: 1, scale: 1 }}
                     exit={{ x: 20, opacity: 0, scale: 0.9 }}
