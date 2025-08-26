@@ -145,6 +145,18 @@ async def get_stats():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Stats failed: {str(e)}")
 
+@app.post("/cleanup")
+async def cleanup_knowledge_base():
+    """
+    Clean up the entire knowledge base by deleting all documents and resetting the manifest.
+    This will force a complete re-ingestion on the next /ingest call.
+    """
+    try:
+        result = await ingestion_service.cleanup_knowledge_base()
+        return {"message": "Knowledge base cleaned successfully", "details": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")
+
 if __name__ == "__main__":
     port = int(os.getenv("RAG_PORT", "8001"))
     uvicorn.run(

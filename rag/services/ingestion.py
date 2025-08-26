@@ -289,3 +289,41 @@ class DocumentIngestionService:
         
         logger.info(f"Ingestion summary: {result}")
         return result
+    
+    async def cleanup_knowledge_base(self) -> Dict[str, Any]:
+        """
+        Clean up the entire knowledge base by deleting all documents and resetting the manifest.
+        """
+        try:
+            # Get current stats
+            doc_count_before = self.collection.count()
+            
+            # Delete all documents from the collection
+            if doc_count_before > 0:
+                # Get all document IDs
+                all_docs = self.collection.get(include=[])
+                if all_docs["ids"]:
+                    self.collection.delete(ids=all_docs["ids"])
+                    logger.info(f"Deleted {len(all_docs['ids'])} documents from collection")
+            
+            # Reset the ingestion manifest
+            empty_manifest = {"files": {}}
+            self._save_manifest(empty_manifest)
+            logger.info("Reset ingestion manifest")
+            
+            # Verify cleanup
+            doc_count_after = self.collection.count()
+            
+            result = {
+                "documents_deleted": doc_count_before,
+                "documents_remaining": doc_count_after,
+                "manifest_reset": True,
+                "cleanup_successful": doc_count_after == 0
+            }
+            
+            logger.info(f"Cleanup completed: {result}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
+            raise
