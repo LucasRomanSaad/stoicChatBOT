@@ -51,7 +51,6 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
     c.id.toString() === conversationId.toString()
   );
 
-  console.log("Current Conversation:", currentConversation)
 
   const sendMessageMutation = useMutation({
     mutationFn: (content: string) => conversationService.sendMessage(conversationId, content),
@@ -178,13 +177,13 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
       
       {/* Chat Header */}
       <motion.div 
-        initial={{ y: -20, opacity: 0 }}
+        initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="relative bg-background/95 backdrop-blur-xl border-b border-border/50 shadow-lg shadow-black/5 dark:shadow-black/20"
+        className="relative dark:bg-gray-800 backdrop-blur-xl border-b border-border/50 shadow-lg shadow-black/5 dark:shadow-black/20"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5" />
-        <div className="relative p-6">
+        <div className="relative p-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <motion.div
@@ -242,14 +241,8 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
                       className="mt-1"
                     >
                       <div className="flex items-center space-x-1">
-                        <motion.div
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                          className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400/60 to-green-500/60"
-                        />
-                        <span className="text-xs text-muted-foreground font-medium">
-                          AI Generated Title
-                        </span>
+                       
+                        
                       </div>
                     </motion.div>
                   )}
@@ -481,7 +474,7 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
                   onChange={handleTextareaChange}
                   onKeyDown={handleKeyDown}
                   placeholder="Share your thoughts or ask about Stoic wisdom..."
-                  className="resize-none pr-16 min-h-[52px] max-h-[120px] border-none bg-transparent focus:ring-0 text-base placeholder:text-muted-foreground/60 rounded-2xl"
+                  className="resize-none pr-16 min-h-[52px] max-h-[120px] border-none dark:bg-gray-800 focus:ring-0 text-base placeholder:text-muted-foreground/60 rounded-2xl"
                   data-testid="input-message"
                 />
                 
@@ -503,14 +496,7 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
               </div>
             </motion.div>
             
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="text-xs text-muted-foreground/80 mt-3 text-center font-medium"
-            >
-              Press <kbd className="px-2 py-1 bg-muted/60 rounded text-xs">Enter</kbd> to send • <kbd className="px-2 py-1 bg-muted/60 rounded text-xs">Shift+Enter</kbd> for new line
-            </motion.p>
+            
           </div>
         </div>
       </motion.div>

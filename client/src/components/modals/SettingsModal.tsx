@@ -60,33 +60,7 @@ export function SettingsModal({ open, onOpenChange, user, isGuest = false, onSig
             </div>
           </div>
 
-          {/* Data & Privacy */}
-          <div>
-            <h3 className="text-sm font-medium mb-3">Data & Privacy</h3>
-            <div className="space-y-3">
-              <Button
-                variant="ghost"
-                className="w-full justify-start p-0 h-auto text-sm"
-                data-testid="button-export-conversations"
-              >
-                Export Conversations
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start p-0 h-auto text-sm"
-                data-testid="button-privacy-policy"
-              >
-                Privacy Policy
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start p-0 h-auto text-sm"
-                data-testid="button-terms-of-service"
-              >
-                Terms of Service
-              </Button>
-            </div>
-          </div>
+          
         </div>
 
         {/* Sign Out Button */}
