@@ -1,5 +1,12 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
+
+class TitleRequest(BaseModel):
+    user_message: str
+    assistant_response: str
+
+class TitleResponse(BaseModel):
+    title: str
 from typing import List, Optional, Dict, Any
 from contextlib import asynccontextmanager
 import os

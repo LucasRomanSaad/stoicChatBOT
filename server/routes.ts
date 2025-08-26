@@ -355,30 +355,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Only generate title for first exchange (2 messages total: 1 user + 1 assistant)
         if (currentMessages.length === 2) {
-          const ragServiceUrl = process.env.RAG_SERVICE_URL || 'http://localhost:8001';
-          
-          // Call title generation endpoint
-          const titleResponse = await fetch(`${ragServiceUrl}/generate-title`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              user_message: content.trim(),
-              assistant_response: ragData.answer
-            })
-          });
-
-          if (titleResponse.ok) {
-            const titleData = await titleResponse.json();
-            const generatedTitle = titleData.title || 'New Conversation';
+          try {
+            const ragServiceUrl = process.env.RAG_SERVICE_URL || 'http://localhost:8001';
             
-            // Update conversation title
-            if (req.isGuest) {
-              await storage.updateGuestConversationTitle(conversationId, req.sessionId, generatedTitle);
-            } else {
-              await storage.updateConversationTitle(parseInt(conversationId), req.user.id, generatedTitle);
+            // Call title generation endpoint
+            const titleResponse = await fetch(`${ragServiceUrl}/generate-title`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                user_message: content.trim(),
+                assistant_response: ragData.answer
+              })
+            });
+
+            if (titleResponse.ok) {
+              const titleData = await titleResponse.json();
+              const generatedTitle = titleData.title || 'New Conversation';
+              
+              // Update conversation title
+              if (req.isGuest) {
+                await storage.updateGuestConversationTitle(conversationId, req.sessionId, generatedTitle);
+              } else {
+                await storage.updateConversationTitle(parseInt(conversationId), req.user.id, generatedTitle);
+              }
+              
+              console.log(`Generated title for conversation ${conversationId}: "${generatedTitle}"`);
             }
+          } catch (titleError) {
+            // Don't fail the whole request if title generation fails
+            console.warn('Title generation failed:', titleError);
           }
         }
       } catch (titleError) {

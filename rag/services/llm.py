@@ -230,3 +230,74 @@ Generate a concise title (3-6 words) that captures the main Stoic philosophical 
             top_p=0.9,
             stream=False
         )
+    
+    async def generate_title(self, user_question: str, assistant_response: str) -> str:
+        """
+        Generate a concise title for a conversation based on the first exchange.
+        
+        Args:
+            user_question: The user's initial question
+            assistant_response: The assistant's response
+            
+        Returns:
+            A concise title (3-6 words) focused on Stoic themes
+        """
+        if not self.client:
+            raise Exception("LLM service not properly initialized. Check GROQ_API_KEY.")
+        
+        try:
+            system_prompt = """You are a title generator for Stoic philosophy conversations. Generate concise, descriptive titles (3-6 words) that capture the essence of the philosophical topic being discussed.
+
+Guidelines:
+- Keep titles between 3-6 words
+- Focus on the main Stoic concept or theme
+- Make titles descriptive and meaningful
+- Use title case
+- Avoid generic phrases like "Discussion about" or "Question on"
+- Capture the specific philosophical aspect being explored
+
+Examples:
+- "Building Emotional Resilience"
+- "Virtue and Character Development"
+- "Finding Purpose Through Stoicism"
+- "Overcoming Life's Obstacles"
+- "Daily Stoic Practice"
+- "Managing Anger and Frustration"
+- "Death and Mortality Reflection"
+"""
+
+            user_message = f"""Based on this conversation exchange, generate a concise title:
+
+User Question: {user_question}
+
+Assistant Response: {assistant_response[:500]}...
+
+Generate only the title, nothing else."""
+
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ]
+            
+            # Use the faster model for title generation
+            response = self._call_groq(messages, self.fallback_model)
+            title = response.choices[0].message.content.strip()
+            
+            # Clean up the title (remove quotes, ensure proper length)
+            title = title.strip('"\'')
+            words = title.split()
+            if len(words) > 6:
+                title = ' '.join(words[:6])
+            
+            logger.info(f"Generated title: '{title}'")
+            return title
+            
+        except Exception as e:
+            logger.error(f"Error generating title: {e}")
+            # Return a fallback title based on keywords in the user question
+            words = user_question.lower().split()
+            stoic_keywords = ['virtue', 'wisdom', 'courage', 'justice', 'temperance', 'stoic', 'philosophy', 'emotion', 'resilience']
+            found_keywords = [word for word in words if word in stoic_keywords]
+            if found_keywords:
+                return f"Stoic {found_keywords[0].title()}"
+            return "Stoic Wisdom Discussion"

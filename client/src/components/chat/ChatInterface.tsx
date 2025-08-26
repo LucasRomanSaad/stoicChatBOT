@@ -17,6 +17,7 @@ interface ChatInterfaceProps {
 export function ChatInterface({ conversationId, onDeleteConversation }: ChatInterfaceProps) {
   const [message, setMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isTitleGenerating, setIsTitleGenerating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
@@ -37,16 +38,25 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
     mutationFn: (content: string) => conversationService.sendMessage(conversationId, content),
     onMutate: () => {
       setIsTyping(true);
+      // Check if this might trigger title generation (for new conversations)
+      if (!messages || messages.length === 0) {
+        setIsTitleGenerating(true);
+      }
     },
     onSuccess: () => {
+      // Invalidate messages first to get the new messages
       queryClient.invalidateQueries({ queryKey: ["/api/conversations", conversationId, "messages"] });
-      // Also refresh conversations list to get updated titles
+      
+      // Invalidate conversations list to get updated titles (including newly generated ones)
       queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      
       setMessage("");
       setIsTyping(false);
+      setIsTitleGenerating(false);
     },
     onError: (error: any) => {
       setIsTyping(false);
+      setIsTitleGenerating(false);
       toast({
         variant: "destructive",
         title: "Failed to send message",
@@ -171,14 +181,15 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
               <div>
                 <AnimatePresence mode="wait">
                   <motion.h2 
-                    key={currentConversation?.title || "Stoic Wisdom"}
+                    key={`${conversationId}-${currentConversation?.title || "Stoic Wisdom"}`}
                     initial={{ x: -20, opacity: 0, scale: 0.9 }}
                     animate={{ x: 0, opacity: 1, scale: 1 }}
                     exit={{ x: 20, opacity: 0, scale: 0.9 }}
                     transition={{ 
-                      duration: 0.4, 
+                      duration: 0.5, 
                       type: "spring", 
-                      stiffness: 150,
+                      stiffness: 120,
+                      damping: 15,
                       ease: "easeOut"
                     }}
                     className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text" 
@@ -186,6 +197,47 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
                   >
                     {currentConversation?.title || "Stoic Wisdom"}
                   </motion.h2>
+                </AnimatePresence>
+                <AnimatePresence>
+                  {isTitleGenerating && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0, y: -10 }}
+                      animate={{ scale: 1, opacity: 1, y: 0 }}
+                      exit={{ scale: 0, opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                      className="mt-1"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <motion.div
+                          animate={{ rotate: [0, 360] }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                          className="w-3 h-3 rounded-full bg-gradient-to-r from-primary/60 to-primary/80 border border-primary/30"
+                        />
+                        <span className="text-xs text-primary/80 font-medium">
+                          Generating title...
+                        </span>
+                      </div>
+                    </motion.div>
+                  )}
+                  {!isTitleGenerating && currentConversation?.title && currentConversation.title !== "New Conversation" && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0, y: -10 }}
+                      animate={{ scale: 1, opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2, duration: 0.4 }}
+                      className="mt-1"
+                    >
+                      <div className="flex items-center space-x-1">
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                          className="w-3 h-3 rounded-full bg-gradient-to-r from-green-400/60 to-green-500/60"
+                        />
+                        <span className="text-xs text-muted-foreground font-medium">
+                          AI Generated Title
+                        </span>
+                      </div>
+                    </motion.div>
+                  )}
                 </AnimatePresence>
               </div>
             </div>
