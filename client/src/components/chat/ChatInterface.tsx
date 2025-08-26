@@ -171,19 +171,12 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
                   initial={{ x: -10, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.1 }}
-                  className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent" 
+                  className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text" 
                   data-testid="conversation-title"
                 >
                   {currentConversation?.title || "Stoic Wisdom"}
                 </motion.h2>
-                <motion.p 
-                  initial={{ x: -10, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-sm text-muted-foreground font-medium"
-                >
-                  Exploring Stoic principles with Marcus Aurelius, Epictetus, Seneca and Ryan Holiday
-                </motion.p>
+               
               </div>
             </div>
             <motion.div
@@ -237,9 +230,9 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="text-2xl font-bold mb-4 bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent"
+                className="text-2xl font-bold mb-4 bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text "
               >
-                Welcome to your Stoic Guide
+                Welcome to your Personal Stoic Guide
               </motion.h3>
               
               <motion.p 
