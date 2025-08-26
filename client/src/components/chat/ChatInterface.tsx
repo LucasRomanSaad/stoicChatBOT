@@ -122,7 +122,7 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
   return (
     <div className="flex-1 flex flex-col">
       {/* Chat Header */}
-      <div className="bg-background border-b border-border p-4">
+      <div className="bg-background border-b border-gray-500 p-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold" data-testid="conversation-title">

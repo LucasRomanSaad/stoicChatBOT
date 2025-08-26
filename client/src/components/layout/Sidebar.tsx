@@ -114,10 +114,10 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
         initial={{ width: 64 }}
         animate={{ width: 320 }}
         transition={{ duration: 0.3 }}
-        className="fixed left-0 top-0 h-screen bg-card border-r border-2 border-blue-500 flex flex-col z-30"
+        className="fixed left-0 top-0 h-screen bg-card border-r  border-blue-500 flex flex-col z-30"
       >
         {/* Header */}
-        <div className="p-4 border-b border-border flex-shrink-0">
+        <div className="p-4 border-b border-gray-500 flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -207,7 +207,7 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
         </div>
 
         {/* User Profile - Fixed at Bottom */}
-        <div className="p-4 border-t border-border flex-shrink-0">
+        <div className="p-4 border-t border-gray-500 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
               <span className="text-white text-sm font-medium" data-testid="user-initials">

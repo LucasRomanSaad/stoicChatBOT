@@ -108,7 +108,7 @@ export default function Auth() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Card className="border-0 shadow-2xl">
+        <Card className="border-2 border-blue-500 shadow-2xl">
           <CardHeader className="text-center">
             <motion.div
               initial={{ scale: 0 }}
@@ -122,7 +122,7 @@ export default function Auth() {
               Personal Stoic Guide
             </CardTitle>
             <p className="text-muted-foreground mt-2">
-              Begin your journey with ancient wisdom
+              Begin your journey in ancient wisdom
             </p>
           </CardHeader>
           <CardContent>
