@@ -11,7 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 export default function Chat() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
-  const conversationId = id ? parseInt(id) : null;
+  const conversationId = id || null;
   const isMobile = useIsMobile();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(isMobile);
 
@@ -63,7 +63,7 @@ export default function Chat() {
 
   // Auto-create conversation if none exists and user is authenticated
   useEffect(() => {
-    if (user && !conversationId && conversations !== undefined) {
+    if (user !== null && !conversationId && conversations !== undefined) {
       if (conversations.length === 0) {
         // No conversations exist, create one
         createConversationMutation.mutate();

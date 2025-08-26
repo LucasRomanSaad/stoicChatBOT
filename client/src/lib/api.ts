@@ -26,12 +26,12 @@ export const conversationService = {
     await apiRequest("DELETE", `/api/conversations/${id}`);
   },
 
-  async getMessages(conversationId: number): Promise<Message[]> {
+  async getMessages(conversationId: number | string): Promise<Message[]> {
     const response = await apiRequest("GET", `/api/conversations/${conversationId}/messages`);
     return response.json();
   },
 
-  async sendMessage(conversationId: number, content: string): Promise<SendMessageResponse> {
+  async sendMessage(conversationId: number | string, content: string): Promise<SendMessageResponse> {
     const response = await apiRequest("POST", `/api/conversations/${conversationId}/messages`, { content });
     return response.json();
   }
