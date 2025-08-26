@@ -8,6 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollText, Send, Trash2, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ChatInterfaceProps {
   conversationId: number;
@@ -18,6 +29,7 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
   const [message, setMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isTitleGenerating, setIsTitleGenerating] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
@@ -114,9 +126,8 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
   };
 
   const handleDeleteConversation = () => {
-    if (window.confirm("Are you sure you want to delete this conversation?")) {
-      deleteConversationMutation.mutate();
-    }
+    deleteConversationMutation.mutate();
+    setShowDeleteDialog(false);
   };
 
   if (isLoading) {
@@ -239,21 +250,45 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
                 </AnimatePresence>
               </div>
             </div>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 rounded-xl border border-transparent hover:border-destructive/20 hover:shadow-lg hover:shadow-destructive/10"
-                onClick={handleDeleteConversation}
-                disabled={deleteConversationMutation.isPending}
-                data-testid="button-delete-conversation"
-              >
-                <Trash2 className="w-5 h-5" />
-              </Button>
-            </motion.div>
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+              <AlertDialogTrigger asChild>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 rounded-xl border border-transparent hover:border-destructive/20 hover:shadow-lg hover:shadow-destructive/10"
+                    disabled={deleteConversationMutation.isPending}
+                    data-testid="button-delete-conversation"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </Button>
+                </motion.div>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <Trash2 className="w-5 h-5 text-destructive" />
+                    Delete Conversation
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this conversation? This action cannot be undone and all messages in this conversation will be permanently removed.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteConversation}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    disabled={deleteConversationMutation.isPending}
+                  >
+                    {deleteConversationMutation.isPending ? "Deleting..." : "Delete"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </motion.div>
