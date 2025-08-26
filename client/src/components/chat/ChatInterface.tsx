@@ -252,15 +252,22 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
                 className="mt-8 flex flex-wrap gap-3 justify-center"
               >
                 {["Virtue & Character", "Emotional Resilience", "Life Purpose", "Daily Practice"].map((topic, index) => (
-                  <motion.div
+                  <motion.button
                     key={topic}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.2 + index * 0.1 }}
-                    className="px-4 py-2 bg-primary/5 text-primary/80 rounded-full text-sm font-medium border border-primary/20 shadow-sm"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      const topicMessage = `Explain the stoicism view on ${topic}`;
+                      sendMessageMutation.mutate(topicMessage);
+                    }}
+                    disabled={sendMessageMutation.isPending}
+                    className="px-4 py-2 bg-primary/5 hover:bg-primary/10 text-primary/80 hover:text-primary rounded-full text-sm font-medium border border-primary/20 hover:border-primary/30 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {topic}
-                  </motion.div>
+                  </motion.button>
                 ))}
               </motion.div>
             </motion.div>
