@@ -30,14 +30,6 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
 
   const { data: conversations = [] } = useQuery({
     queryKey: ["/api/conversations"],
-    retry: (failureCount, error) => {
-      // During title generation, retry a few times if we get empty results
-      if (isTitleGenerating && failureCount < 3) {
-        return true;
-      }
-      return failureCount < 1;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000),
   });
 
   const currentConversation = conversations.find((c: any) => c.id === conversationId || c.id === conversationId.toString());
@@ -51,26 +43,16 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
         setIsTitleGenerating(true);
       }
     },
-    onSuccess: async () => {
-      // Clear typing state first
-      setIsTyping(false);
-      setMessage("");
-      
+    onSuccess: () => {
       // Invalidate messages first to get the new messages
-      await queryClient.invalidateQueries({ queryKey: ["/api/conversations", conversationId, "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations", conversationId, "messages"] });
       
-      // For first message exchanges, wait longer before invalidating conversations
-      // to ensure title generation is complete on the backend
-      if (!messages || messages.length === 0) {
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-          setIsTitleGenerating(false);
-        }, 3000); // Give backend more time to complete title generation and database updates
-      } else {
-        // For subsequent messages, invalidate immediately since no title generation occurs
-        queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-        setIsTitleGenerating(false);
-      }
+      // Invalidate conversations list to get updated titles (including newly generated ones)
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+      
+      setMessage("");
+      setIsTyping(false);
+      setIsTitleGenerating(false);
     },
     onError: (error: any) => {
       setIsTyping(false);
@@ -199,7 +181,7 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
               <div>
                 <AnimatePresence mode="wait">
                   <motion.h2 
-                    key={`${currentConversation?.title || "Stoic Wisdom"}`}
+                    key={`${conversationId}-${currentConversation?.title || "Stoic Wisdom"}`}
                     initial={{ x: -20, opacity: 0, scale: 0.9 }}
                     animate={{ x: 0, opacity: 1, scale: 1 }}
                     exit={{ x: 20, opacity: 0, scale: 0.9 }}
