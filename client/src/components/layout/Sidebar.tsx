@@ -14,7 +14,7 @@ import { SettingsModal } from "@/components/modals/SettingsModal";
 import { MeResponse } from "@/lib/auth";
 
 interface SidebarProps {
-  currentConversationId?: number;
+  currentConversationId?: string | number | null;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -194,7 +194,7 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2 }}
                     className={`rounded-lg p-3 cursor-pointer transition-all duration-200 ${
-                      currentConversationId === conversation.id
+                      currentConversationId?.toString() === conversation.id.toString()
                         ? "bg-primary/15 border-2 border-primary shadow-lg shadow-primary/20 ring-1 ring-primary/30"
                         : "hover:bg-muted border border-transparent"
                     }`}
@@ -214,7 +214,7 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                             transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
                             className={`font-medium mb-1 line-clamp-1 ${
-                              currentConversationId === conversation.id ? "text-primary font-semibold" : ""
+                              currentConversationId?.toString() === conversation.id.toString() ? "text-primary font-semibold" : ""
                             }`} 
                             data-testid={`conversation-title-${conversation.id}`}
                           >
