@@ -30,6 +30,14 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
 
   const { data: conversations = [] } = useQuery({
     queryKey: ["/api/conversations"],
+    retry: (failureCount, error) => {
+      // During title generation, retry a few times if we get empty results
+      if (isTitleGenerating && failureCount < 3) {
+        return true;
+      }
+      return failureCount < 1;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000),
   });
 
   const currentConversation = conversations.find((c: any) => c.id === conversationId || c.id === conversationId.toString());
@@ -51,13 +59,13 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
       // Invalidate messages first to get the new messages
       await queryClient.invalidateQueries({ queryKey: ["/api/conversations", conversationId, "messages"] });
       
-      // For first message exchanges, wait a bit longer before invalidating conversations
+      // For first message exchanges, wait longer before invalidating conversations
       // to ensure title generation is complete on the backend
       if (!messages || messages.length === 0) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
           setIsTitleGenerating(false);
-        }, 1500); // Give backend time to complete title generation
+        }, 3000); // Give backend more time to complete title generation and database updates
       } else {
         // For subsequent messages, invalidate immediately since no title generation occurs
         queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
