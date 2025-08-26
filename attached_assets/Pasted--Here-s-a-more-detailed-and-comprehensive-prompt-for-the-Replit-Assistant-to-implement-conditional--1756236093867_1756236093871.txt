@@ -1,0 +1,56 @@
+**Here's a more detailed and comprehensive prompt for the Replit Assistant to implement conditional source rendering based on LLM response type:
+
+Detailed AI Prompt for Replit Assistant:
+
+"I need to implement conditional source rendering in my Stoic Guide chat application to improve user experience by only showing sources when they are genuinely relevant to the conversation.
+
+Current Problem:
+The frontend currently always displays sources when message.sources exists, but this creates an unnatural experience for greeting responses where sources aren't meaningful. Users see irrelevant source citations when they simply say "Hello" or ask introductory questions.
+
+Technical Context:
+
+Backend LLM service (rag/services/llm.py) already has greeting detection logic in _is_greeting_or_introduction() method
+The system filters sources for greetings (only using sources with similarity > 0.7)
+Frontend MessageBubble component (client/src/components/chat/MessageBubble.tsx) always renders SourceCitation when sources exist
+Message schema is defined in shared/schema.ts
+Required Implementation:
+
+Add Response Type Classification to Backend:
+
+Extend the message schema in shared/schema.ts to include a responseType field with values: 'greeting', 'philosophical', 'general'
+Modify the LLM service in rag/services/llm.py to determine response type based on the existing _is_greeting_or_introduction() logic
+Update the /api/conversations/:id/messages endpoint in server/routes.ts to include responseType in the API response
+Ensure the responseType is stored with messages in the database
+Implement Frontend Conditional Rendering:
+
+Update the MessageBubble component to only render SourceCitation when message.responseType === 'philosophical'
+Maintain existing source display behavior for philosophical discussions
+Hide sources completely for greeting responses to create a more natural conversation flow
+Database Schema Updates:
+
+Add responseType column to the messages table if needed
+Ensure backward compatibility with existing messages (default to 'general' for existing records)
+Response Type Logic:
+
+Greeting responses: When _is_greeting_or_introduction() returns true, set responseType to 'greeting'
+Philosophical responses: When sources are used meaningfully (similarity > 0.5), set responseType to 'philosophical'
+General responses: Default fallback for other types of interactions
+Expected Behavior After Implementation:
+
+When users send greetings like "Hello", "Hi", "What is your purpose?", the response will be warm and personal without showing source citations
+When users ask philosophical questions about Stoicism, sources will be displayed normally as they currently are
+The conversation feels more natural with sources only appearing when they add genuine value
+Files to Modify:
+
+shared/schema.ts - Add responseType to message schema
+rag/services/llm.py - Include responseType determination in LLM response
+server/routes.ts - Pass responseType through API responses
+client/src/components/chat/MessageBubble.tsx - Conditional source rendering
+Database migration may be needed for new responseType field
+Testing Requirements:
+
+Verify greeting responses don't show sources
+Confirm philosophical questions still show sources normally
+Ensure existing conversations continue to work
+Test edge cases like mixed greeting/philosophical questions
+Please implement these changes to create a more natural conversational experience where sources only appear when they genuinely contribute to the philosophical guidance being provided."
