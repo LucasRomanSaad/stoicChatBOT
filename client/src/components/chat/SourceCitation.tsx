@@ -13,6 +13,9 @@ interface SourceCitationProps {
 export function SourceCitation({ sources }: SourceCitationProps) {
   const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set());
 
+  // Filter sources to only show those with similarity >= 0.5
+  const filteredSources = sources?.filter(source => source.similarity >= 0.5) || [];
+
   const toggleSource = (index: number) => {
     const newExpanded = new Set(expandedSources);
     if (newExpanded.has(index)) {
@@ -29,7 +32,7 @@ export function SourceCitation({ sources }: SourceCitationProps) {
     return "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400";
   };
 
-  if (!sources || sources.length === 0) {
+  if (!filteredSources || filteredSources.length === 0) {
     return null;
   }
 
@@ -44,7 +47,7 @@ export function SourceCitation({ sources }: SourceCitationProps) {
         <div className="flex items-center mb-3">
           <BookOpen className="w-4 h-4 text-primary mr-2" />
           <h4 className="text-sm font-medium">
-            Sources ({sources.length})
+            Sources ({filteredSources.length})
           </h4>
           <TooltipProvider>
             <Tooltip>
@@ -64,7 +67,7 @@ export function SourceCitation({ sources }: SourceCitationProps) {
         </div>
 
         <div className="space-y-3">
-          {sources.map((source, index) => (
+          {filteredSources.map((source, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0 }}
