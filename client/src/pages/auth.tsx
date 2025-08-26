@@ -70,12 +70,34 @@ export default function Auth() {
     },
   });
 
+  const guestMutation = useMutation({
+    mutationFn: authService.startGuestSession,
+    onSuccess: () => {
+      toast({
+        title: "Welcome!",
+        description: "You're now using Personal Stoic Guide as a guest.",
+      });
+      setLocation("/");
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to start guest session",
+        description: error.message || "Please try again.",
+      });
+    },
+  });
+
   const onLogin = (data: LoginData) => {
     loginMutation.mutate(data);
   };
 
   const onRegister = (data: RegisterData) => {
     registerMutation.mutate(data);
+  };
+
+  const onGuestMode = () => {
+    guestMutation.mutate();
   };
 
   return (
@@ -204,6 +226,32 @@ export default function Auth() {
                 </form>
               </TabsContent>
             </Tabs>
+
+            {/* Guest Mode Section */}
+            <div className="mt-6 text-center">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or</span>
+                </div>
+              </div>
+              
+              <Button
+                variant="outline"
+                onClick={onGuestMode}
+                disabled={guestMutation.isPending}
+                className="w-full mt-4"
+                data-testid="button-guest-mode"
+              >
+                {guestMutation.isPending ? "Starting session..." : "Continue as Guest"}
+              </Button>
+              
+              <p className="text-xs text-muted-foreground mt-2">
+                Try the app without creating an account. Your conversations will be temporary.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </motion.div>

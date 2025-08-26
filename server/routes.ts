@@ -3,8 +3,21 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import session from "express-session";
 import { registerSchema, loginSchema, insertConversationSchema, insertMessageSchema, type ChatResponse } from "@shared/schema";
 import { z } from "zod";
+
+// Session configuration
+const sessionConfig = {
+  secret: process.env.SESSION_SECRET || 'guest-session-secret-change-this',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production'
+  }
+};
 
 // JWT middleware
 const authenticateToken = async (req: any, res: any, next: any) => {
@@ -22,10 +35,41 @@ const authenticateToken = async (req: any, res: any, next: any) => {
       return res.status(401).json({ message: 'Invalid token' });
     }
     req.user = user;
+    req.isGuest = false;
     next();
   } catch (error) {
     return res.status(401).json({ message: 'Invalid token' });
   }
+};
+
+// Combined authentication middleware (supports both JWT and guest sessions)
+const authenticateUserOrGuest = async (req: any, res: any, next: any) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  // Try JWT authentication first
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+      const user = await storage.getUser(decoded.userId);
+      if (user) {
+        req.user = user;
+        req.isGuest = false;
+        return next();
+      }
+    } catch (error) {
+      // JWT failed, fall through to guest session
+    }
+  }
+
+  // Fall back to guest session
+  if (req.session) {
+    req.isGuest = true;
+    req.sessionId = req.session.id;
+    return next();
+  }
+
+  return res.status(401).json({ message: 'Authentication required' });
 };
 
 // Rate limiting helper (simple in-memory)
@@ -53,11 +97,15 @@ const rateLimit = (maxRequests: number, windowMs: number) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Session middleware
+  app.use(session(sessionConfig));
+
   // CORS
   app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
     if (req.method === 'OPTIONS') {
       res.sendStatus(200);
     } else {
@@ -66,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auth routes
-  app.post('/api/auth/register', rateLimit(5, 15 * 60 * 1000), async (req, res) => {
+  app.post('/api/auth/register', rateLimit(5, 15 * 60 * 100000), async (req, res) => {
     try {
       const { email, password } = registerSchema.parse(req.body);
       
@@ -130,81 +178,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/me', authenticateToken, async (req: any, res) => {
-    res.json({ user: { id: req.user.id, email: req.user.email } });
+  app.get('/api/me', authenticateUserOrGuest, async (req: any, res) => {
+    if (req.isGuest) {
+      res.json({ 
+        user: null, 
+        isGuest: true, 
+        sessionId: req.sessionId 
+      });
+    } else {
+      res.json({ 
+        user: { id: req.user.id, email: req.user.email },
+        isGuest: false
+      });
+    }
+  });
+
+  // Guest session initialization
+  app.post('/api/auth/guest', (req: any, res) => {
+    if (!req.session.id) {
+      return res.status(500).json({ message: 'Failed to create session' });
+    }
+    res.json({ 
+      sessionId: req.session.id,
+      message: 'Guest session created' 
+    });
   });
 
   // Conversation routes
-  app.get('/api/conversations', authenticateToken, async (req: any, res) => {
+  app.get('/api/conversations', authenticateUserOrGuest, async (req: any, res) => {
     try {
-      const conversations = await storage.getUserConversations(req.user.id);
-      res.json(conversations);
+      if (req.isGuest) {
+        const conversations = await storage.getGuestConversations(req.sessionId);
+        res.json(conversations);
+      } else {
+        const conversations = await storage.getUserConversations(req.user.id);
+        res.json(conversations);
+      }
     } catch (error) {
       console.error('Get conversations error:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   });
 
-  app.post('/api/conversations', authenticateToken, async (req: any, res) => {
+  app.post('/api/conversations', authenticateUserOrGuest, async (req: any, res) => {
     try {
       const { title } = req.body;
-      const conversation = await storage.createConversation({
-        userId: req.user.id,
-        title: title || 'New Conversation'
-      });
-      res.json(conversation);
+      
+      if (req.isGuest) {
+        const conversation = await storage.createGuestConversation(
+          req.sessionId,
+          title || 'New Conversation'
+        );
+        res.json(conversation);
+      } else {
+        const conversation = await storage.createConversation({
+          userId: req.user.id,
+          title: title || 'New Conversation'
+        });
+        res.json(conversation);
+      }
     } catch (error) {
       console.error('Create conversation error:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   });
 
-  app.get('/api/conversations/:id/messages', authenticateToken, async (req: any, res) => {
+  app.get('/api/conversations/:id/messages', authenticateUserOrGuest, async (req: any, res) => {
     try {
-      const conversationId = parseInt(req.params.id);
-      if (isNaN(conversationId)) {
-        return res.status(400).json({ message: 'Invalid conversation ID' });
+      const conversationId = req.params.id;
+      
+      if (req.isGuest) {
+        const messages = await storage.getGuestConversationMessages(conversationId, req.sessionId);
+        res.json(messages);
+      } else {
+        const numericId = parseInt(conversationId);
+        if (isNaN(numericId)) {
+          return res.status(400).json({ message: 'Invalid conversation ID' });
+        }
+        const messages = await storage.getConversationMessages(numericId, req.user.id);
+        res.json(messages);
       }
-
-      const messages = await storage.getConversationMessages(conversationId, req.user.id);
-      res.json(messages);
     } catch (error) {
       console.error('Get messages error:', error);
-      if (error.message === 'Conversation not found') {
+      if (error instanceof Error && error.message === 'Conversation not found') {
         return res.status(404).json({ message: 'Conversation not found' });
       }
       res.status(500).json({ message: 'Internal server error' });
     }
   });
 
-  app.post('/api/conversations/:id/messages', authenticateToken, rateLimit(30, 60 * 1000), async (req: any, res) => {
+  app.post('/api/conversations/:id/messages', authenticateUserOrGuest, rateLimit(30, 60 * 1000), async (req: any, res) => {
     try {
-      const conversationId = parseInt(req.params.id);
-      if (isNaN(conversationId)) {
-        return res.status(400).json({ message: 'Invalid conversation ID' });
-      }
-
+      const conversationId = req.params.id;
       const { content } = req.body;
+      
       if (!content || typeof content !== 'string' || content.trim().length === 0) {
         return res.status(400).json({ message: 'Message content is required' });
       }
 
-      // Verify conversation exists and user owns it
-      const conversation = await storage.getConversation(conversationId, req.user.id);
-      if (!conversation) {
-        return res.status(404).json({ message: 'Conversation not found' });
+      let userMessage: any;
+      let recentMessages: any[];
+      
+      if (req.isGuest) {
+        // Verify guest conversation exists
+        const conversation = await storage.getGuestConversation(conversationId, req.sessionId);
+        if (!conversation) {
+          return res.status(404).json({ message: 'Conversation not found' });
+        }
+
+        // Save user message for guest
+        userMessage = await (storage as any).createGuestMessageWithSession(
+          conversationId,
+          req.sessionId,
+          'user',
+          content.trim()
+        );
+
+        // Get recent conversation context
+        recentMessages = await storage.getGuestConversationMessages(conversationId, req.sessionId);
+      } else {
+        const numericId = parseInt(conversationId);
+        if (isNaN(numericId)) {
+          return res.status(400).json({ message: 'Invalid conversation ID' });
+        }
+
+        // Verify user conversation exists
+        const conversation = await storage.getConversation(numericId, req.user.id);
+        if (!conversation) {
+          return res.status(404).json({ message: 'Conversation not found' });
+        }
+
+        // Save user message
+        userMessage = await storage.createMessage({
+          conversationId: numericId,
+          role: 'user',
+          content: content.trim(),
+          sources: null
+        });
+
+        // Get recent conversation context
+        recentMessages = await storage.getConversationMessages(numericId, req.user.id);
       }
 
-      // Save user message
-      const userMessage = await storage.createMessage({
-        conversationId,
-        role: 'user',
-        content: content.trim(),
-        sources: null
-      });
-
-      // Get recent conversation context (last 6 messages)
-      const recentMessages = await storage.getConversationMessages(conversationId, req.user.id);
       const contextMessages = recentMessages.slice(-6).map(msg => ({
         role: msg.role,
         content: msg.content
@@ -231,12 +346,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ragData: ChatResponse = await ragResponse.json();
 
       // Save assistant message with sources
-      const assistantMessage = await storage.createMessage({
-        conversationId,
-        role: 'assistant',
-        content: ragData.answer,
-        sources: ragData.sources
-      });
+      let assistantMessage: any;
+      
+      if (req.isGuest) {
+        assistantMessage = await (storage as any).createGuestMessageWithSession(
+          conversationId,
+          req.sessionId,
+          'assistant',
+          ragData.answer,
+          ragData.sources
+        );
+      } else {
+        assistantMessage = await storage.createMessage({
+          conversationId: parseInt(conversationId),
+          role: 'assistant',
+          content: ragData.answer,
+          sources: ragData.sources
+        });
+      }
 
       res.json({
         userMessage,
@@ -249,14 +376,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/conversations/:id', authenticateToken, async (req: any, res) => {
+  app.delete('/api/conversations/:id', authenticateUserOrGuest, async (req: any, res) => {
     try {
-      const conversationId = parseInt(req.params.id);
-      if (isNaN(conversationId)) {
-        return res.status(400).json({ message: 'Invalid conversation ID' });
+      const conversationId = req.params.id;
+      
+      if (req.isGuest) {
+        await storage.deleteGuestConversation(conversationId, req.sessionId);
+      } else {
+        const numericId = parseInt(conversationId);
+        if (isNaN(numericId)) {
+          return res.status(400).json({ message: 'Invalid conversation ID' });
+        }
+        await storage.deleteConversation(numericId, req.user.id);
       }
-
-      await storage.deleteConversation(conversationId, req.user.id);
+      
       res.json({ message: 'Conversation deleted' });
     } catch (error) {
       console.error('Delete conversation error:', error);

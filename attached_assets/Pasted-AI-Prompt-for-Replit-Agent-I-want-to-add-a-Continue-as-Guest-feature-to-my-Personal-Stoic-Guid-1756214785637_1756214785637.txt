@@ -1,0 +1,34 @@
+AI Prompt for Replit Agent:
+
+I want to add a "Continue as Guest" feature to my Personal Stoic Guide web application. I need you to implement session-based guest functionality where guests can use the chat without authentication but their conversations are stored temporarily in server memory using sessions. Here are the specific changes needed:
+
+Backend Changes:
+
+Add express-session middleware to handle guest sessions
+Create a new middleware that allows both authenticated users and guest sessions
+Modify all conversation and message routes to work with either user IDs or session IDs
+Add in-memory storage for guest conversations that expire after 24 hours
+Update the storage layer to handle both database-stored (user) and memory-stored (guest) conversations
+Frontend Changes:
+
+Add a "Continue as Guest" button to the auth page below the login/register tabs
+Update the auth service to handle guest mode (no token required)
+Modify the API client to work without authentication headers for guest users
+Add guest indicators in the UI showing limited functionality
+Show prompts encouraging guests to register for full features
+Key Requirements:
+
+Use express-session with memory store for guest sessions
+Guest conversations should persist during the session but not permanently
+Both authenticated and guest users should have the same chat functionality
+The RAG service calls should work identically for both user types
+Guest conversations should be identifiable by session ID instead of user ID
+Clean separation between user-based and session-based data storage
+Maintain existing authentication flow for registered users
+Implementation approach:
+
+Create a dual middleware system that checks for either JWT token OR valid session
+Extend the storage abstraction to handle both database and in-memory operations
+Use session.id as the identifier for guest users throughout the system
+Add session configuration with appropriate timeouts and security settings
+Please implement these changes while maintaining the existing functionality for authenticated users and ensuring the guest experience is seamless.

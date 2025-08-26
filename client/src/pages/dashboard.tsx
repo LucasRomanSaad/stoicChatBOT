@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { conversationService } from "@/lib/api";
+import { authService } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollText, Plus, MessageCircle } from "lucide-react";
@@ -9,6 +10,14 @@ import { formatDistanceToNow } from "date-fns";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
+
+  const { data: meData } = useQuery({
+    queryKey: ["/api/me"],
+    queryFn: authService.getCurrentUser,
+  });
+  
+  const user = meData?.user;
+  const isGuest = meData?.isGuest || false;
 
   const { data: conversations, isLoading } = useQuery({
     queryKey: ["/api/conversations"],
@@ -56,7 +65,11 @@ export default function Dashboard() {
             Personal Stoic Guide
           </h1>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Welcome back. Continue your philosophical journey or start a new conversation.
+            {isGuest ? (
+              <>Welcome Guest! You're using a temporary session. <span className="text-amber-600 dark:text-amber-400">Create an account to save your conversations.</span></>
+            ) : (
+              "Welcome back. Continue your philosophical journey or start a new conversation."
+            )}
           </p>
         </motion.div>
 

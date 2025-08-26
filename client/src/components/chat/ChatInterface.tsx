@@ -26,11 +26,11 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
     queryFn: () => conversationService.getMessages(conversationId),
   });
 
-  const { data: conversations } = useQuery({
+  const { data: conversations = [] } = useQuery({
     queryKey: ["/api/conversations"],
   });
 
-  const currentConversation = conversations?.find(c => c.id === conversationId);
+  const currentConversation = conversations.find((c: any) => c.id === conversationId || c.id === conversationId.toString());
 
   const sendMessageMutation = useMutation({
     mutationFn: (content: string) => conversationService.sendMessage(conversationId, content),

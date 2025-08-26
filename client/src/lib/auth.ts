@@ -11,11 +11,23 @@ export interface AuthResponse {
   token: string;
 }
 
+export interface GuestSessionResponse {
+  sessionId: string;
+  message: string;
+}
+
+export interface MeResponse {
+  user: User | null;
+  isGuest: boolean;
+  sessionId?: string;
+}
+
 export const authService = {
   async login(data: LoginData): Promise<AuthResponse> {
     const response = await apiRequest("POST", "/api/auth/login", data);
     const result = await response.json();
     localStorage.setItem("auth_token", result.token);
+    localStorage.removeItem("guest_mode"); // Clear guest mode when logging in
     return result;
   },
 
@@ -23,14 +35,23 @@ export const authService = {
     const response = await apiRequest("POST", "/api/auth/register", data);
     const result = await response.json();
     localStorage.setItem("auth_token", result.token);
+    localStorage.removeItem("guest_mode"); // Clear guest mode when registering
     return result;
   },
 
-  async getCurrentUser(): Promise<User | null> {
+  async startGuestSession(): Promise<GuestSessionResponse> {
+    const response = await apiRequest("POST", "/api/auth/guest", {});
+    const result = await response.json();
+    localStorage.setItem("guest_mode", "true");
+    localStorage.removeItem("auth_token"); // Clear any existing token
+    return result;
+  },
+
+  async getCurrentUser(): Promise<MeResponse | null> {
     try {
       const response = await apiRequest("GET", "/api/me");
       const result = await response.json();
-      return result.user;
+      return result;
     } catch (error) {
       return null;
     }
@@ -38,6 +59,7 @@ export const authService = {
 
   logout() {
     localStorage.removeItem("auth_token");
+    localStorage.removeItem("guest_mode");
   },
 
   getToken(): string | null {
@@ -46,5 +68,13 @@ export const authService = {
 
   isAuthenticated(): boolean {
     return !!this.getToken();
+  },
+
+  isGuest(): boolean {
+    return localStorage.getItem("guest_mode") === "true";
+  },
+
+  isLoggedInOrGuest(): boolean {
+    return this.isAuthenticated() || this.isGuest();
   }
 };

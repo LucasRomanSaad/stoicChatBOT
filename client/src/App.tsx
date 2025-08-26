@@ -16,21 +16,25 @@ import { useEffect } from "react";
 function AuthenticatedApp() {
   const [location, setLocation] = useLocation();
   
-  const { data: user, isLoading } = useQuery({
+  const { data: meData, isLoading } = useQuery({
     queryKey: ["/api/me"],
     queryFn: authService.getCurrentUser,
   });
 
   useEffect(() => {
-    // Redirect to auth if not authenticated and not already on auth page
-    if (user === null && location !== "/auth") {
+    const isAuthenticated = authService.isAuthenticated();
+    const isGuest = authService.isGuest();
+    const hasAccess = isAuthenticated || isGuest;
+    
+    // Redirect to auth if no access and not already on auth page
+    if (!hasAccess && !meData && location !== "/auth") {
       setLocation("/auth");
     }
-    // Redirect to dashboard if authenticated and on auth page
-    if (user && location === "/auth") {
+    // Redirect to dashboard if has access and on auth page
+    if ((hasAccess || meData) && location === "/auth") {
       setLocation("/");
     }
-  }, [user, location, setLocation]);
+  }, [meData, location, setLocation]);
 
   if (isLoading) {
     return (

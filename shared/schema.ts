@@ -93,6 +93,13 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type RegisterData = z.infer<typeof registerSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
 
+// Guest schema
+export const guestSessionSchema = z.object({
+  sessionId: z.string(),
+});
+
+export type GuestSessionData = z.infer<typeof guestSessionSchema>;
+
 // Source types for RAG
 export type Source = {
   title: string;
@@ -110,4 +117,21 @@ export type ChatResponse = {
     tokens_completion: number;
     model: string;
   };
+};
+
+// Guest conversation types
+export type GuestConversation = {
+  id: string;
+  sessionId: string;
+  title: string;
+  createdAt: Date;
+};
+
+export type GuestMessage = {
+  id: string;
+  conversationId: string;
+  role: 'user' | 'assistant';
+  content: string;
+  sources?: Source[];
+  createdAt: Date;
 };

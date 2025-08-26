@@ -9,6 +9,7 @@ import { ScrollText, Plus, Settings, Moon, Sun, LogOut, MessageCircle } from "lu
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { SettingsModal } from "@/components/modals/SettingsModal";
+import { MeResponse } from "@/lib/auth";
 
 interface SidebarProps {
   currentConversationId?: number;
@@ -27,10 +28,13 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
     queryFn: conversationService.getConversations,
   });
 
-  const { data: user } = useQuery({
+  const { data: meData } = useQuery({
     queryKey: ["/api/me"],
     queryFn: authService.getCurrentUser,
   });
+  
+  const user = meData?.user;
+  const isGuest = meData?.isGuest || false;
 
   const createConversationMutation = useMutation({
     mutationFn: conversationService.createConversation,
@@ -41,7 +45,7 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
   });
 
   const handleCreateConversation = () => {
-    createConversationMutation.mutate();
+    createConversationMutation.mutate("");
   };
 
   const handleSignOut = () => {
@@ -206,8 +210,11 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate" data-testid="user-email">
-                {user?.email || "Loading..."}
+                {isGuest ? "Guest User" : (user?.email || "Loading...")}
               </p>
+              {isGuest && (
+                <p className="text-xs text-muted-foreground">Limited session</p>
+              )}
             </div>
             <Button
               variant="ghost"
@@ -226,6 +233,7 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
         open={showSettings} 
         onOpenChange={setShowSettings}
         user={user}
+        isGuest={isGuest}
         onSignOut={handleSignOut}
       />
     </>

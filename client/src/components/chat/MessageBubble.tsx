@@ -43,8 +43,8 @@ export function MessageBubble({ message, isLast }: MessageBubbleProps) {
                 </p>
               </motion.div>
 
-              {message.sources && (
-                <SourceCitation sources={message.sources as any[]} />
+              {message.sources && Array.isArray(message.sources) && message.sources.length > 0 && (
+                <SourceCitation sources={message.sources} />
               )}
 
               <p className="text-xs text-muted-foreground mt-2" data-testid={`message-timestamp-${message.id}`}>
