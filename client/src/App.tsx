@@ -22,19 +22,23 @@ function AuthenticatedApp() {
   });
 
   useEffect(() => {
-    const isAuthenticated = authService.isAuthenticated();
-    const isGuest = authService.isGuest();
-    const hasAccess = isAuthenticated || isGuest;
-
-    // Redirect to auth if no access and not already on auth page
-    if (!hasAccess && !meData && location !== "/auth") {
+    // Only run auth logic after data is loaded to prevent infinite loops
+    if (isLoading) return;
+    
+    const hasAuthState = authService.hasAuthState();
+    
+    // Redirect to auth if no auth state and not already on auth page
+    if (!hasAuthState && location !== "/auth") {
       setLocation("/auth");
+      return;
     }
-    // Redirect to dashboard if has access and on auth page
-    if ((hasAccess || meData) && location === "/auth") {
+    
+    // Redirect away from auth if user has auth state
+    if (hasAuthState && location === "/auth") {
       setLocation("/");
+      return;
     }
-  }, [meData, location, setLocation]);
+  }, [isLoading, location, setLocation]);
 
   if (isLoading) {
     return (
@@ -45,21 +49,6 @@ function AuthenticatedApp() {
         </div>
       </div>
     );
-  }
-
-  // Check if user has any authentication state (logged in or guest)
-  const hasAuthState = authService.hasAuthState();
-
-  // Redirect users without auth state to auth page
-  if (!hasAuthState && location !== "/auth") {
-    setLocation("/auth");
-    return null;
-  }
-
-  // Redirect users with auth state away from auth page
-  if (hasAuthState && location === "/auth") {
-    setLocation("/");
-    return null;
   }
 
   return (
