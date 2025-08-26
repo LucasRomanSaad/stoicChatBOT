@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
+from contextlib import asynccontextmanager
 import os
 from pathlib import Path
 import uvicorn
@@ -14,12 +15,24 @@ if env_path.exists():
     from dotenv import load_dotenv
     load_dotenv(env_path)
 
-app = FastAPI(title="Personal Stoic Guide RAG Service", version="1.0.0")
-
 # Initialize services
 ingestion_service = DocumentIngestionService()
 retrieval_service = RetrievalService()
 llm_service = LLMService()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize the RAG system on startup."""
+    try:
+        await ingestion_service.initialize()
+        await retrieval_service.initialize()
+        print("🚀 RAG service initialized successfully")
+        yield
+    except Exception as e:
+        print(f"❌ Failed to initialize RAG service: {e}")
+        yield
+
+app = FastAPI(title="Personal Stoic Guide RAG Service", version="1.0.0", lifespan=lifespan)
 
 # Request/Response models
 class Message(BaseModel):
@@ -53,17 +66,6 @@ class IngestionResponse(BaseModel):
     processed_files: List[str]
     skipped_files: List[str]
     total_chunks: int
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize the RAG system on startup."""
-    try:
-        await ingestion_service.initialize()
-        await retrieval_service.initialize()
-        print("🚀 RAG service initialized successfully")
-    except Exception as e:
-        print(f"❌ Failed to initialize RAG service: {e}")
-        # Don't exit completely, allow health check to show the error
 
 @app.get("/health")
 async def health_check():

@@ -59,8 +59,13 @@ Remember: You are drawing from authentic Stoic texts to provide guidance. Be fai
         
         context_parts = ["Previous conversation context:"]
         for msg in conversation_context:
-            role = msg['role'].title()
-            content = msg['content'][:200] + "..." if len(msg['content']) > 200 else msg['content']
+            # Handle both dict and object types
+            if hasattr(msg, 'role'):
+                role = msg.role.title()
+                content = msg.content[:200] + "..." if len(msg.content) > 200 else msg.content
+            else:
+                role = msg['role'].title()
+                content = msg['content'][:200] + "..." if len(msg['content']) > 200 else msg['content']
             context_parts.append(f"{role}: {content}")
         
         return "\n".join(context_parts) + "\n\n"
