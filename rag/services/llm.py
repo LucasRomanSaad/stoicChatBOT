@@ -38,7 +38,6 @@ FORMATTING REQUIREMENTS:
 - Use bullet points (-) or numbered lists for multiple items
 - Use **bold** for key concepts and important phrases
 - Use *italics* for emphasis and quotes from ancient texts
-- Use `code blocks` for specific exercises or practices
 - Use > blockquotes for direct quotes from Stoic philosophers
 - Break up long paragraphs into shorter, digestible sections
 - Use horizontal rules (---) to separate different topics when appropriate
