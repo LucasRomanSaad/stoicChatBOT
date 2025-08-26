@@ -103,35 +103,10 @@ export function SourceCitation({ sources }: SourceCitationProps) {
                         {source.snippet}
                       </p>
                     </div>
-                    <motion.div
-                      animate={{ rotate: expandedSources.has(index) ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="ml-2"
-                    >
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    </motion.div>
+                    
                   </div>
 
-                  <AnimatePresence>
-                    {expandedSources.has(index) && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="mt-3 pt-3 border-t border-border"
-                      >
-                        <div className="bg-muted/50 rounded-lg p-3">
-                          <p className="text-sm leading-relaxed" data-testid={`source-full-content-${index}`}>
-                            {source.snippet}
-                          </p>
-                          <div className="mt-2 text-xs text-muted-foreground">
-                            <span className="font-medium">Chunk ID:</span> {source.chunk_id}
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  
                 </div>
               </Card>
             </motion.div>

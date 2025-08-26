@@ -5,7 +5,7 @@ import { conversationService } from "@/lib/api";
 import { MessageBubble } from "./MessageBubble";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollText, Send, Download, Trash2 } from "lucide-react";
+import { ScrollText, Send, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ChatInterfaceProps {
@@ -129,18 +129,10 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
               {currentConversation?.title || "Conversation"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Exploring Stoic principles with Marcus Aurelius, Epictetus, and Seneca
+              Exploring Stoic principles with Marcus Aurelius, Epictetus, Seneca and Ryan Holiday
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="p-2"
-              data-testid="button-export-conversation"
-            >
-              <Download className="w-4 h-4" />
-            </Button>
             <Button
               variant="ghost"
               size="sm"

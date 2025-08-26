@@ -1,52 +1,46 @@
 {
   "files": {
-    "meditations marcus aurelious 2021-06-01 00_48_06.pdf": {
-      "hash": "782072c914ad5b0d6506fd00046dc17efea07ade263995a1b836e2dd139a031b",
-      "title": "Meditations Marcus Aurelious 2021 06 01 00 48 06",
-      "chunks": 494,
-      "processed_at": "2025-08-26T14:30:03.334592"
-    },
-    "The obstacle is the way ( PDFDrive ).pdf": {
-      "hash": "dc4ce5afca8a6c68cf242125d03aa81d56669f3e0c5c2987ed6526650c753246",
-      "title": "The Obstacle Is The Way ( Pdfdrive )",
-      "chunks": 365,
-      "processed_at": "2025-08-26T14:30:30.214861"
-    },
-    "Ego is the Enemy ( PDFDrive ).pdf": {
-      "hash": "e90d90b76fd0a083bf15b3929ff7cceaed93215b46c1f76e3a8c538e968823dc",
-      "title": "Ego Is The Enemy ( Pdfdrive )",
-      "chunks": 435,
-      "processed_at": "2025-08-26T14:31:05.908318"
-    },
-    "Stillness is the Key - Ryan Holiday ( PDFDrive ).pdf": {
-      "hash": "1a85b9ad34e4f5ab40c6c40bc3c91016aa269fd3fa95d759fd7dee968fdd9b8b",
-      "title": "Stillness Is The Key   Ryan Holiday ( Pdfdrive )",
-      "chunks": 509,
-      "processed_at": "2025-08-26T14:31:33.876916"
-    },
-    "How to be a stoic _ using ancient philosophy to live a modern life ( PDFDrive ).pdf": {
-      "hash": "000b4494c50708a6f99f7f31a4d9f835219ee051090483e59730dac36f4fcb56",
-      "title": "How To Be A Stoic   Using Ancient Philosophy To Live A Modern Life ( Pdfdrive )",
-      "chunks": 616,
-      "processed_at": "2025-08-26T14:32:18.689996"
-    },
-    "The Daily Stoic_ 366 Meditations on Wisdom, Perseverance, and the Art of Living ( PDFDrive ).pdf": {
-      "hash": "07dc3c4640006eea96fcd382827e324bbc05955f40ca303c51339f0480c5e728",
-      "title": "The Daily Stoic  366 Meditations On Wisdom, Perseverance, And The Art Of Living ( Pdfdrive )",
-      "chunks": 745,
-      "processed_at": "2025-08-26T14:33:13.263488"
-    },
-    "Stoic Six Pack_ Meditations of Marcus Aurelius, Golden Sayings, Fragments and Discourses of Epictetus, Letters From A Stoic and The Enchiridion ( PDFDrive ).pdf": {
-      "hash": "437e3d61e2ee335f9aca2e3b2d52a817858d6ab354bdbdd2249fc16f482c04c3",
-      "title": "Stoic Six Pack  Meditations Of Marcus Aurelius, Golden Sayings, Fragments And Discourses Of Epictetus, Letters From A Stoic And The Enchiridion ( Pdfdrive )",
-      "chunks": 2796,
-      "processed_at": "2025-08-26T14:36:48.013506"
-    },
-    "Epictetus_ A Stoic and Socratic Guide to Life ( PDFDrive ).pdf": {
+    "Epictetus.pdf": {
       "hash": "2f1c35f58a1a3f73cddaa15b45a4b1454dba5d08fd1d814fbf897971dc88aaf8",
-      "title": "Epictetus  A Stoic And Socratic Guide To Life ( Pdfdrive )",
+      "title": "Epictetus",
       "chunks": 914,
-      "processed_at": "2025-08-26T14:37:42.894366"
+      "processed_at": "2025-08-26T14:54:09.919925"
+    },
+    "Ego is the Enemy.pdf": {
+      "hash": "e90d90b76fd0a083bf15b3929ff7cceaed93215b46c1f76e3a8c538e968823dc",
+      "title": "Ego Is The Enemy",
+      "chunks": 435,
+      "processed_at": "2025-08-26T14:54:44.071921"
+    },
+    "Marcus Aurelious.pdf": {
+      "hash": "782072c914ad5b0d6506fd00046dc17efea07ade263995a1b836e2dd139a031b",
+      "title": "Marcus Aurelious",
+      "chunks": 494,
+      "processed_at": "2025-08-26T14:55:20.808881"
+    },
+    "Stillness is the Key.pdf": {
+      "hash": "1a85b9ad34e4f5ab40c6c40bc3c91016aa269fd3fa95d759fd7dee968fdd9b8b",
+      "title": "Stillness Is The Key",
+      "chunks": 509,
+      "processed_at": "2025-08-26T14:55:49.179891"
+    },
+    "Stoic Six Pack.pdf": {
+      "hash": "437e3d61e2ee335f9aca2e3b2d52a817858d6ab354bdbdd2249fc16f482c04c3",
+      "title": "Stoic Six Pack",
+      "chunks": 2796,
+      "processed_at": "2025-08-26T14:59:24.187212"
+    },
+    "The Daily Stoic.pdf": {
+      "hash": "07dc3c4640006eea96fcd382827e324bbc05955f40ca303c51339f0480c5e728",
+      "title": "The Daily Stoic",
+      "chunks": 745,
+      "processed_at": "2025-08-26T15:00:24.427658"
+    },
+    "The obstacle is the way.pdf": {
+      "hash": "dc4ce5afca8a6c68cf242125d03aa81d56669f3e0c5c2987ed6526650c753246",
+      "title": "The Obstacle Is The Way",
+      "chunks": 365,
+      "processed_at": "2025-08-26T15:00:57.511211"
     }
   }
 }

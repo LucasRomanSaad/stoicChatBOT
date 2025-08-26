@@ -112,7 +112,7 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
         initial={{ width: 64 }}
         animate={{ width: 320 }}
         transition={{ duration: 0.3 }}
-        className="bg-card border-r border-border flex flex-col"
+        className="bg-card border-r border-2 border-blue-500 flex flex-col"
       >
         {/* Header */}
         <div className="p-4 border-b border-border">
@@ -223,7 +223,7 @@ export function Sidebar({ currentConversationId, isCollapsed }: SidebarProps) {
               className="p-1.5"
               data-testid="button-sign-out"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 text-red-500" />
             </Button>
           </div>
         </div>
