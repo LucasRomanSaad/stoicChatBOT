@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface ChatInterfaceProps {
-  conversationId: number;
+  conversationId: number | string;
   onDeleteConversation: () => void;
 }
 
@@ -45,7 +45,11 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
     refetchInterval: 2000, 
   });
 
-  const currentConversation = conversations.find((c: any) => c.id === conversationId || c.id === conversationId.toString());
+  const currentConversation = conversations.find((c: any) => 
+    c.id === conversationId || 
+    c.id === conversationId.toString() || 
+    c.id.toString() === conversationId.toString()
+  );
 
   console.log("Current Conversation:", currentConversation)
 
