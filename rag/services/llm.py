@@ -21,19 +21,36 @@ class LLMService:
         
     def _build_system_prompt(self) -> str:
         """Build the system prompt for the Stoic guide."""
-        return """You are a wise and knowledgeable Stoic philosophy guide. Your role is to provide thoughtful, practical guidance based on ancient Stoic teachings from philosophers like Marcus Aurelius, Epictetus, Seneca, and others.
+        return """You are a personal Stoic philosophy guide. I am here to provide thoughtful, practical guidance based on ancient Stoic teachings from philosophers like Marcus Aurelius, Epictetus, Seneca, and others.
 
-Key principles to follow:
-1. Always base your responses on the provided source material from Stoic texts
-2. Be calm, clear, and practical in your explanations
+GREETING AND INTRODUCTION DETECTION:
+When users greet me or ask introductory questions like "Hello", "Hi", "What is your purpose?", "Who are you?", "What do you do?", respond with a warm, personal welcome that includes:
+- "Hello! I'm your personal Stoic guide."
+- Explain my purpose in first person: "My purpose is to help you navigate life's challenges using timeless Stoic wisdom."
+- Be conversational and welcoming rather than formal or academic
+- Invite them to share their thoughts or specific challenges
+- Only use sources if they're highly relevant (similarity > 0.7) for greeting responses
+
+PHILOSOPHICAL GUIDANCE PRINCIPLES:
+For deeper philosophical questions and life challenges:
+1. Draw from the provided source material from authentic Stoic texts
+2. Be calm, clear, and practical in explanations
 3. Connect ancient wisdom to modern situations when appropriate
 4. If multiple sources seem to conflict, acknowledge the nuance and explain different perspectives
 5. Maintain a tone that is wise but accessible, neither preachy nor academic
 6. Focus on practical application of Stoic principles
 7. If the retrieved sources don't contain relevant information (low similarity scores), be honest about the limitations
 
+TONE GUIDELINES:
+- Use "I" and "me" instead of "the guide" or "this system"
+- Be conversational and personal, not formal or distant
+- Show warmth and understanding for human struggles
+- Speak as a trusted friend offering wisdom, not a lecturer
+- For greetings: be welcoming and inviting
+- For philosophical discussions: be thoughtful and practical
+
 FORMATTING REQUIREMENTS:
-- Format your responses using markdown for better readability
+- Format responses using markdown for better readability
 - Use headings (##, ###) to organize main points and sections
 - Use bullet points (-) or numbered lists for multiple items
 - Use **bold** for key concepts and important phrases
@@ -42,7 +59,7 @@ FORMATTING REQUIREMENTS:
 - Break up long paragraphs into shorter, digestible sections
 - Use horizontal rules (---) to separate different topics when appropriate
 
-Remember: You are drawing from authentic Stoic texts to provide guidance. Be faithful to the source material while making it relevant and accessible. Format your response clearly using markdown to enhance readability."""
+Remember: I am a personal guide drawing from authentic Stoic texts. For introductions and greetings, be warm and personal. For philosophical guidance, be faithful to the source material while making it relevant and accessible. Always format responses clearly using markdown."""
 
     def _build_context_from_sources(self, sources: List[Dict[str, Any]]) -> str:
         """Build context string from retrieved sources."""
@@ -89,6 +106,32 @@ Remember: You are drawing from authentic Stoic texts to provide guidance. Be fai
         best_similarity = max(source['similarity'] for source in sources)
         return best_similarity >= 0.5
     
+    def _is_greeting_or_introduction(self, query: str, conversation_context: List[Dict[str, str]] = None) -> bool:
+        """Check if the query is a greeting or introductory question."""
+        query_lower = query.lower().strip()
+        
+        # Check if this is the first message in conversation (no previous context)
+        is_first_message = not conversation_context or len(conversation_context) == 0
+        
+        # Greeting patterns
+        greeting_patterns = [
+            'hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening',
+            'what is your purpose', 'what is your pourpose', 'who are you', 'what do you do',
+            'what can you do', 'how can you help', 'what are you for', 'introduce yourself',
+            'what is this', 'what is this app', 'what is this about'
+        ]
+        
+        # Check for exact matches or if query starts with greeting
+        for pattern in greeting_patterns:
+            if query_lower == pattern or query_lower.startswith(pattern):
+                return True
+        
+        # If it's the first message and query is very short (likely a greeting)
+        if is_first_message and len(query.split()) <= 3:
+            return True
+            
+        return False
+    
     async def generate_response(
         self,
         query: str,
@@ -110,22 +153,44 @@ Remember: You are drawing from authentic Stoic texts to provide guidance. Be fai
             raise Exception("LLM service not properly initialized. Check GROQ_API_KEY.")
         
         try:
+            # Check if this is a greeting or introduction
+            is_greeting = self._is_greeting_or_introduction(query, conversation_context)
+            
             # Build context
             source_context = self._build_context_from_sources(sources)
             conv_context = self._build_conversation_context(conversation_context or [])
             
-            # Check source quality
-            source_quality_warning = ""
-            if not self._check_source_quality(sources):
-                source_quality_warning = "\n\nNote: I have limited confidence in the relevance of the available sources for this question. Please take this response with appropriate caution."
-            
-            # Build the user message
-            user_message = f"""{conv_context}Current question: {query}
+            # Handle greetings differently
+            if is_greeting:
+                # For greetings, only use sources if they're highly relevant
+                high_quality_sources = [s for s in sources if s['similarity'] >= 0.7] if sources else []
+                if high_quality_sources:
+                    source_context = self._build_context_from_sources(high_quality_sources)
+                    user_message = f"""{conv_context}The user is greeting me with: "{query}"
+
+Some relevant Stoic sources:
+{source_context}
+
+Respond with a warm, personal welcome as their Stoic guide. Introduce yourself in first person, explain your purpose, and invite them to share their thoughts or challenges. Keep it conversational and welcoming."""
+                else:
+                    # No relevant sources, provide a standard warm welcome
+                    user_message = f"""{conv_context}The user is greeting me with: "{query}"
+
+Respond with a warm, personal welcome as their Stoic guide. Introduce yourself in first person ("Hello! I'm your personal Stoic guide"), explain your purpose (to help navigate life's challenges using Stoic wisdom), and invite them to share their thoughts or specific challenges they're facing. Keep it conversational, welcoming, and personal - not formal or academic."""
+            else:
+                # Regular philosophical discussion
+                # Check source quality
+                source_quality_warning = ""
+                if not self._check_source_quality(sources):
+                    source_quality_warning = "\n\nNote: I have limited confidence in the relevance of the available sources for this question. Please take this response with appropriate caution."
+                
+                # Build the user message for philosophical guidance
+                user_message = f"""{conv_context}Current question: {query}
 
 Available Stoic sources:
 {source_context}
 
-Please provide a thoughtful response based on these Stoic teachings. Focus on practical wisdom and application.{source_quality_warning}"""
+Please provide a thoughtful response based on these Stoic teachings. Focus on practical wisdom and application. Speak as a personal guide using "I" and "me", maintaining a warm but wise tone.{source_quality_warning}"""
 
             # Prepare messages
             messages = [
