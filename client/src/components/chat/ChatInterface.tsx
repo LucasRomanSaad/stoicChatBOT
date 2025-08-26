@@ -35,9 +35,10 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: messages, isLoading } = useQuery({
+  const { data: messages, isLoading, error: messagesError } = useQuery({
     queryKey: ["/api/conversations", conversationId, "messages"],
     queryFn: () => conversationService.getMessages(conversationId),
+    retry: false, // Don't retry if conversation doesn't exist
   });
 
   const { data: conversations = [] } = useQuery({
@@ -133,6 +134,41 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
     deleteConversationMutation.mutate();
     setShowDeleteDialog(false);
   };
+
+  // Handle case where conversation doesn't exist
+  if (messagesError && !isLoading) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex-1 flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20"
+      >
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="relative inline-flex items-center justify-center w-24 h-24 mb-8">
+            <div className="absolute inset-0 bg-gradient-to-r from-destructive/20 via-destructive/30 to-destructive/20 rounded-full blur-xl animate-pulse" />
+            <div className="relative w-20 h-20 bg-gradient-to-br from-destructive/10 to-destructive/20 rounded-full flex items-center justify-center border border-destructive/30 shadow-2xl">
+              <ScrollText className="w-10 h-10 text-destructive" />
+            </div>
+          </div>
+          
+          <h3 className="text-2xl font-bold mb-4 text-destructive">
+            Conversation Not Found
+          </h3>
+          
+          <p className="text-muted-foreground mb-6 leading-relaxed">
+            This conversation no longer exists. It may have been deleted or expired.
+          </p>
+          
+          <Button
+            onClick={onDeleteConversation}
+            className="px-6 py-3 text-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl hover:shadow-primary/25 transition-all duration-200"
+          >
+            Go to Main Chat
+          </Button>
+        </div>
+      </motion.div>
+    );
+  }
 
   if (isLoading) {
     return (
