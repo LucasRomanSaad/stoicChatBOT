@@ -43,16 +43,26 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
         setIsTitleGenerating(true);
       }
     },
-    onSuccess: () => {
-      // Invalidate messages first to get the new messages
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations", conversationId, "messages"] });
-      
-      // Invalidate conversations list to get updated titles (including newly generated ones)
-      queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
-      
-      setMessage("");
+    onSuccess: async () => {
+      // Clear typing state first
       setIsTyping(false);
-      setIsTitleGenerating(false);
+      setMessage("");
+      
+      // Invalidate messages first to get the new messages
+      await queryClient.invalidateQueries({ queryKey: ["/api/conversations", conversationId, "messages"] });
+      
+      // For first message exchanges, wait a bit longer before invalidating conversations
+      // to ensure title generation is complete on the backend
+      if (!messages || messages.length === 0) {
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+          setIsTitleGenerating(false);
+        }, 1500); // Give backend time to complete title generation
+      } else {
+        // For subsequent messages, invalidate immediately since no title generation occurs
+        queryClient.invalidateQueries({ queryKey: ["/api/conversations"] });
+        setIsTitleGenerating(false);
+      }
     },
     onError: (error: any) => {
       setIsTyping(false);
