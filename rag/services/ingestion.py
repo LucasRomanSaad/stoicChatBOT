@@ -3,6 +3,7 @@ import json
 import hashlib
 from pathlib import Path
 from typing import List, Dict, Any
+from datetime import datetime
 import chromadb
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
@@ -29,6 +30,9 @@ class DocumentIngestionService:
     async def initialize(self):
         """Initialize the ingestion service."""
         try:
+            # Create ChromaDB directory if it doesn't exist
+            os.makedirs(self.chroma_path, exist_ok=True)
+            
             # Initialize ChromaDB
             self.client = chromadb.PersistentClient(path=self.chroma_path)
             self.collection = self.client.get_or_create_collection(
@@ -37,9 +41,13 @@ class DocumentIngestionService:
             )
             
             # Initialize embeddings model
-            self.embeddings_model = HuggingFaceEmbeddings(
-                model_name=self.embedding_model_name
-            )
+            try:
+                self.embeddings_model = HuggingFaceEmbeddings(
+                    model_name=self.embedding_model_name
+                )
+            except Exception as e:
+                logger.error(f"Failed to load embedding model: {e}")
+                raise
             
             # Initialize text splitter
             self.text_splitter = RecursiveCharacterTextSplitter(
@@ -218,7 +226,7 @@ class DocumentIngestionService:
                         "hash": current_hash,
                         "title": title,
                         "chunks": len(chunks),
-                        "processed_at": str(pd.Timestamp.now())
+                        "processed_at": datetime.now().isoformat()
                     }
                     
                     processed_files.append(pdf_file.name)

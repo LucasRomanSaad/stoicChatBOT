@@ -9,10 +9,11 @@ logger = logging.getLogger(__name__)
 class LLMService:
     def __init__(self):
         self.groq_api_key = os.getenv("GROQ_API_KEY")
-        if not self.groq_api_key:
-            raise ValueError("GROQ_API_KEY environment variable is required")
-        
-        self.client = Groq(api_key=self.groq_api_key)
+        if not self.groq_api_key or self.groq_api_key == "gsk_dummy_key_for_development":
+            logger.warning("GROQ_API_KEY not set or using dummy key. LLM service will not work properly.")
+            self.client = None
+        else:
+            self.client = Groq(api_key=self.groq_api_key)
         self.primary_model = "llama3-70b-8192"
         self.fallback_model = "llama3-8b-8192"
         self.max_tokens = 1000
@@ -90,6 +91,9 @@ Remember: You are drawing from authentic Stoic texts to provide guidance. Be fai
         Returns:
             Dictionary with answer and usage information
         """
+        if not self.client:
+            raise Exception("LLM service not properly initialized. Check GROQ_API_KEY.")
+        
         try:
             # Build context
             source_context = self._build_context_from_sources(sources)

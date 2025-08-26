@@ -19,6 +19,9 @@ class RetrievalService:
     async def initialize(self):
         """Initialize the retrieval service."""
         try:
+            # Create ChromaDB directory if it doesn't exist
+            os.makedirs(self.chroma_path, exist_ok=True)
+            
             # Initialize ChromaDB
             self.client = chromadb.PersistentClient(path=self.chroma_path)
             
@@ -34,9 +37,13 @@ class RetrievalService:
                 logger.warning("Created new empty collection. Run /ingest to add documents.")
             
             # Initialize embeddings model
-            self.embeddings_model = HuggingFaceEmbeddings(
-                model_name=self.embedding_model_name
-            )
+            try:
+                self.embeddings_model = HuggingFaceEmbeddings(
+                    model_name=self.embedding_model_name
+                )
+            except Exception as e:
+                logger.error(f"Failed to load embedding model: {e}")
+                raise
             
             # Check if collection has documents
             doc_count = self.collection.count()

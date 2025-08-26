@@ -2,10 +2,17 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import os
+from pathlib import Path
 import uvicorn
 from services.ingestion import DocumentIngestionService
 from services.retrieval import RetrievalService
 from services.llm import LLMService
+
+# Load environment variables
+env_path = Path(__file__).parent / '.env'
+if env_path.exists():
+    from dotenv import load_dotenv
+    load_dotenv(env_path)
 
 app = FastAPI(title="Personal Stoic Guide RAG Service", version="1.0.0")
 
@@ -50,9 +57,13 @@ class IngestionResponse(BaseModel):
 @app.on_event("startup")
 async def startup_event():
     """Initialize the RAG system on startup."""
-    await ingestion_service.initialize()
-    await retrieval_service.initialize()
-    print("🚀 RAG service initialized successfully")
+    try:
+        await ingestion_service.initialize()
+        await retrieval_service.initialize()
+        print("🚀 RAG service initialized successfully")
+    except Exception as e:
+        print(f"❌ Failed to initialize RAG service: {e}")
+        # Don't exit completely, allow health check to show the error
 
 @app.get("/health")
 async def health_check():
