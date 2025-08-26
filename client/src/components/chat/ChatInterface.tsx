@@ -30,6 +30,7 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
 
   const { data: conversations = [] } = useQuery({
     queryKey: ["/api/conversations"],
+    refetchInterval: 1000, 
   });
 
   const currentConversation = conversations.find((c: any) => c.id === conversationId || c.id === conversationId.toString());
