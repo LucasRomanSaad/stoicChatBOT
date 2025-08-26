@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { spawn } from "child_process";
+import path from "path";
 
 const app = express();
 app.use(express.json());
@@ -36,7 +38,54 @@ app.use((req, res, next) => {
   next();
 });
 
+function startRagService() {
+  const ragPath = path.join(process.cwd(), 'rag');
+  const ragPort = process.env.RAG_PORT || '8001';
+  
+  log('Starting Python RAG service...');
+  
+  const ragProcess = spawn('python', ['main.py'], {
+    cwd: ragPath,
+    stdio: ['pipe', 'pipe', 'pipe'],
+    env: {
+      ...process.env,
+      RAG_PORT: ragPort
+    }
+  });
+
+  ragProcess.stdout.on('data', (data) => {
+    log(`[RAG] ${data.toString().trim()}`);
+  });
+
+  ragProcess.stderr.on('data', (data) => {
+    log(`[RAG Error] ${data.toString().trim()}`);
+  });
+
+  ragProcess.on('close', (code) => {
+    log(`RAG service exited with code ${code}`);
+    if (code !== 0) {
+      log('RAG service crashed, attempting restart in 5 seconds...');
+      setTimeout(startRagService, 5000);
+    }
+  });
+
+  ragProcess.on('error', (error) => {
+    log(`Failed to start RAG service: ${error.message}`);
+    log('Retrying RAG service startup in 5 seconds...');
+    setTimeout(startRagService, 5000);
+  });
+
+  return ragProcess;
+}
+
 (async () => {
+  // Start the RAG service first
+  if (process.env.NODE_ENV === 'production') {
+    startRagService();
+    // Give RAG service time to start
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

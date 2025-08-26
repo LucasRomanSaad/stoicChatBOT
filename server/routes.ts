@@ -56,7 +56,7 @@ const rateLimit = (maxRequests: number, windowMs: number) => {
     }
 
     const requests = rateLimiter.get(key).filter((time: number) => time > windowStart);
-    
+
     if (requests.length >= maxRequests) {
       return res.status(429).json({ message: 'Too many requests' });
     }
@@ -85,18 +85,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/register', rateLimit(5, 15 * 60 * 100000), async (req, res) => {
     try {
       const { email, password } = registerSchema.parse(req.body);
-      
+
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
         return res.status(400).json({ message: 'User already exists' });
       }
 
       const passwordHash = await bcrypt.hash(password, 12);
-      
+
       const user = await storage.createUser({ email, passwordHash });
-      
+
       const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '7d' });
-      
+
       res.json({ 
         user: { id: user.id, email: user.email }, 
         token 
@@ -113,7 +113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/login', rateLimit(10, 15 * 60 * 1000), async (req, res) => {
     try {
       const { email, password } = loginSchema.parse(req.body);
-      
+
       const user = await storage.getUserByEmail(email);
       if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
@@ -125,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '7d' });
-      
+
       res.json({ 
         user: { id: user.id, email: user.email }, 
         token 
@@ -173,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const conversations = await storage.getUserConversations(req.user.id);
         res.json(conversations);
       }
-      
+
     } catch (error) {
       console.error('Get conversations error:', error);
       res.status(500).json({ message: 'Internal server error' });
@@ -183,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/conversations', authenticateUserOrGuest, async (req: any, res) => {
     try {
       const { title } = req.body;
-      
+
       if (req.isGuest) {
         const conversation = await storage.createGuestConversation(
           req.sessionId,
@@ -206,7 +206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/conversations/:id/messages', authenticateUserOrGuest, async (req: any, res) => {
     try {
       const conversationId = req.params.id;
-      
+
       if (req.isGuest) {
         const messages = await storage.getGuestConversationMessages(conversationId, req.sessionId);
         res.json(messages);
@@ -231,14 +231,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const conversationId = req.params.id;
       const { content } = req.body;
-      
+
       if (!content || typeof content !== 'string' || content.trim().length === 0) {
         return res.status(400).json({ message: 'Message content is required' });
       }
 
       let userMessage: any;
       let recentMessages: any[];
-      
+
       if (req.isGuest) {
         const conversation = await storage.getGuestConversation(conversationId, req.sessionId);
         if (!conversation) {
@@ -279,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: msg.content
       }));
 
-      const ragServiceUrl = process.env.RAG_SERVICE_URL || 'http://localhost:8001';
+      const ragServiceUrl = process.env.RAG_SERVICE_URL || 'http://0.0.0.0:8001';
       const ragResponse = await fetch(`${ragServiceUrl}/chat`, {
         method: 'POST',
         headers: {
@@ -299,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ragData: ChatResponse = await ragResponse.json();
 
       let assistantMessage: any;
-      
+
       if (req.isGuest) {
         assistantMessage = await (storage as any).createGuestMessageWithSession(
           conversationId,
@@ -319,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       try {
         let currentMessages: any[];
-        
+
         if (req.isGuest) {
           currentMessages = await storage.getGuestConversationMessages(conversationId, req.sessionId);
         } else {
@@ -328,8 +328,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (currentMessages.length === 2) {
           try {
-            const ragServiceUrl = process.env.RAG_SERVICE_URL || 'http://localhost:8001';
-            
+            const ragServiceUrl = process.env.RAG_SERVICE_URL || 'http://0.0.0.0:8001';
+
             const titleResponse = await fetch(`${ragServiceUrl}/generate-title`, {
               method: 'POST',
               headers: {
@@ -344,13 +344,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (titleResponse.ok) {
               const titleData = await titleResponse.json();
               const generatedTitle = titleData.title || 'New Conversation';
-              
+
               if (req.isGuest) {
                 await storage.updateGuestConversationTitle(conversationId, req.sessionId, generatedTitle);
               } else {
                 await storage.updateConversationTitle(parseInt(conversationId), req.user.id, generatedTitle);
               }
-              
+
               console.log(`Generated title for conversation ${conversationId}: "${generatedTitle}"`);
             }
           } catch (titleError) {
@@ -375,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/conversations/:id', authenticateUserOrGuest, async (req: any, res) => {
     try {
       const conversationId = req.params.id;
-      
+
       if (req.isGuest) {
         await storage.deleteGuestConversation(conversationId, req.sessionId);
       } else {
@@ -385,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         await storage.deleteConversation(numericId, req.user.id);
       }
-      
+
       res.json({ message: 'Conversation deleted' });
     } catch (error) {
       console.error('Delete conversation error:', error);
@@ -395,7 +395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/ingest', async (req, res) => {
     try {
-      const ragServiceUrl = process.env.RAG_SERVICE_URL || 'http://localhost:8001';
+      const ragServiceUrl = process.env.RAG_SERVICE_URL || 'http://0.0.0.0:8001';
       const ragResponse = await fetch(`${ragServiceUrl}/ingest`, {
         method: 'POST',
         headers: {

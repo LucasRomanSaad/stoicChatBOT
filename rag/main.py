@@ -187,9 +187,10 @@ async def generate_title(request: TitleRequest):
 
 if __name__ == "__main__":
     port = int(os.getenv("RAG_PORT", "8001"))
+    is_production = os.getenv("NODE_ENV") == "production"
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=port,
-        reload=True
+        reload=not is_production
     )
