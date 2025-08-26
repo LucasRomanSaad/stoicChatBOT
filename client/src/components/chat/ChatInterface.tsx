@@ -47,6 +47,8 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
 
   const currentConversation = conversations.find((c: any) => c.id === conversationId || c.id === conversationId.toString());
 
+  console.log("Current Conversation:", currentConversation)
+
   const sendMessageMutation = useMutation({
     mutationFn: (content: string) => conversationService.sendMessage(conversationId, content),
     onMutate: () => {
@@ -250,7 +252,7 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
                 </AnimatePresence>
               </div>
             </div>
-            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog} >
               <AlertDialogTrigger asChild>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
@@ -259,15 +261,15 @@ export function ChatInterface({ conversationId, onDeleteConversation }: ChatInte
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="p-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 rounded-xl border border-transparent hover:border-destructive/20 hover:shadow-lg hover:shadow-destructive/10"
+                    className="p-3 hover:bg-destructive/10 text-destructive transition-all duration-200 rounded-xl border border-transparent hover:border-destructive/20 hover:shadow-lg hover:shadow-destructive/10"
                     disabled={deleteConversationMutation.isPending}
                     data-testid="button-delete-conversation"
                   >
-                    <Trash2 className="w-5 h-5" />
+                    <Trash2 className="w-5 h-5 text" />
                   </Button>
                 </motion.div>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="border-2 border-red-500">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="flex items-center gap-2">
                     <Trash2 className="w-5 h-5 text-destructive" />

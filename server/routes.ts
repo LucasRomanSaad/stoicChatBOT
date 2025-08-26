@@ -191,6 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const conversations = await storage.getUserConversations(req.user.id);
         res.json(conversations);
       }
+      
     } catch (error) {
       console.error('Get conversations error:', error);
       res.status(500).json({ message: 'Internal server error' });
