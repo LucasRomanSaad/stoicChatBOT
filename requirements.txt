@@ -8,7 +8,7 @@ langchain==0.1.20
 langchain-community==0.0.38
 langchain-text-splitters==0.0.1
 langchain-huggingface==0.0.3
-sentence-transformers==2.2.2
+sentence-transformers==2.6.1
 pypdf==3.17.0
 groq==0.4.1
 torch==2.7.1
